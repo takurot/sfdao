@@ -21,6 +21,7 @@ black = "^24.8.0"
 flake8 = "^7.1.1"
 mypy = "^1.13.0"
 bandit = "^1.7.9"
+pandas-stubs = "^2.2.3.241126"
 
 [tool.pytest.ini_options]
 minversion = "8.0"

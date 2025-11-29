@@ -62,7 +62,8 @@ def generate_simple_synthetic(
     synthetic_data: dict[str, Iterable[float]] = {}
     for column in real_df.columns:
         if _is_label_column(column):
-            synthetic_data[column] = rng.choice(real_df[column].values, size=n_samples)
+            label_values = real_df[column].to_numpy()
+            synthetic_data[column] = rng.choice(label_values, size=n_samples)
         else:
             synthetic_data[column] = _sample_numeric_column(real_df[column], rng, n_samples)
 
