@@ -29,7 +29,7 @@ SFDAOは、金融業界向けの合成データ（Synthetic Data）の品質を�
 
 ```bash
 # リポジトリのクローン
-git clone https://github.com/YOUR_USERNAME/sfdao.git
+git clone https://github.com/takurot/sfdao.git
 cd sfdao
 
 # 依存関係のインストール
