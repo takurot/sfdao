@@ -19,12 +19,8 @@ class ColumnType(str, Enum):
 class TypeDetector:
     """Detect column semantic types with lightweight heuristics."""
 
-    EMAIL_PATTERN = re.compile(
-        r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", re.IGNORECASE
-    )
-    PHONE_PATTERN = re.compile(
-        r"(?:\+?\d{1,3}[-\s]?)?(?:\(?\d{2,4}\)?[-\s]?){2,3}\d{2,4}"
-    )
+    EMAIL_PATTERN = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", re.IGNORECASE)
+    PHONE_PATTERN = re.compile(r"(?:\+?\d{1,3}[-\s]?)?(?:\(?\d{2,4}\)?[-\s]?){2,3}\d{2,4}")
     CREDIT_CARD_PATTERN = re.compile(r"(?:\d{4}[-\s]?){3}\d{4}")
 
     def detect(self, series: pd.Series, column_name: str) -> ColumnType:  # noqa: ARG002
