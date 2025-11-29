@@ -16,6 +16,43 @@
 2. **Green**: テストをパスする最小限のコードを書く
 3. **Refactor**: コードを整理・最適化する
 
+### ブランチ戦略
+
+**重要**: 各PRの作業は必ず専用のブランチを作成して実行してください。直接mainブランチで作業しないでください。
+
+```bash
+# PR#1の場合の例
+git checkout -b feature/pr-01-project-setup
+
+# 作業を実施...
+
+# コミット
+git add .
+git commit -m "PR#1: プロジェクト構造とCI/CD設定
+
+- pyproject.tomlの作成
+- CI/CD設定
+- テスト実行"
+
+# プッシュ
+git push -u origin feature/pr-01-project-setup
+
+# GitHub上でPR作成
+gh pr create --title "PR#1: プロジェクト構造とCI/CD設定" --body "..."
+
+# PRマージ後、mainブランチに戻る
+git checkout main
+git pull origin main
+
+# 作業ブランチの削除（オプション）
+git branch -d feature/pr-01-project-setup
+```
+
+**ブランチ命名規則**:
+- `feature/pr-XX-short-description`: 機能追加PR（例: feature/pr-02-data-ingestion）
+- `fix/issue-XX-bug-description`: バグ修正
+- `docs/description`: ドキュメント更新のみ
+
 ### テスト戦略
 
 - **単体テスト (Unit Tests)**: 各モジュール・関数レベルでのテスト (カバレッジ目標: 90%以上)
@@ -29,6 +66,41 @@
 - **型チェック**: mypy (strict mode)
 - **セキュリティチェック**: bandit
 - **依存関係管理**: Poetry
+
+### 開発環境（macOS）
+
+このプロジェクトはmacOS環境での開発を前提としています。
+
+**仮想環境のセットアップ**:
+
+```bash
+# Poetryのインストール（初回のみ）
+curl -sSL https://install.python-poetry.org | python3 -
+
+# PATHの設定（~/.zshrc または ~/.bash_profile に追加）
+export PATH="$HOME/.local/bin:$PATH"
+
+# 新しいターミナルセッションで確認
+poetry --version
+
+# プロジェクトディレクトリで仮想環境を作成
+cd /path/to/sfdao
+poetry install
+
+# 仮想環境を有効化
+poetry shell
+
+# 仮想環境内でPythonバージョン確認
+python --version  # Python 3.10以上であることを確認
+```
+
+**macOS固有の注意事項**:
+- `._*` ファイル（リソースフォーク）は自動的に.gitignoreで除外されます
+- `.DS_Store` ファイルも除外されます
+- WeasyPrint（PDF生成）には追加の依存関係が必要な場合があります：
+  ```bash
+  brew install cairo pango gdk-pixbuf libffi
+  ```
 
 ---
 

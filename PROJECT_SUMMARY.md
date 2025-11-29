@@ -138,14 +138,44 @@ cd sfdao
 # Poetryのインストール（まだの場合）
 curl -sSL https://install.python-poetry.org | python3 -
 
+# PATHの設定（~/.zshrc または ~/.bash_profile に追加）
+export PATH="$HOME/.local/bin:$PATH"
+
+# 新しいターミナルセッションでPoetry確認
+poetry --version
+
 # 依存関係のインストール（PR#1で pyproject.toml 作成後）
 poetry install
 
 # 仮想環境の有効化
 poetry shell
 
+# macOS固有: WeasyPrint用の依存関係（PDF生成機能用）
+brew install cairo pango gdk-pixbuf libffi
+
 # テストの実行
 pytest
+```
+
+### ブランチ戦略
+
+**重要**: 各PRの作業は必ず専用のブランチを作成して実行してください。
+
+```bash
+# PR作業開始
+git checkout -b feature/pr-01-project-setup
+
+# 作業完了後
+git add .
+git commit -m "PR#1: プロジェクト構造とCI/CD設定"
+git push -u origin feature/pr-01-project-setup
+
+# PR作成
+gh pr create --title "PR#1: プロジェクト構造とCI/CD設定" --body "..."
+
+# PRマージ後、mainに戻る
+git checkout main
+git pull origin main
 ```
 
 ---

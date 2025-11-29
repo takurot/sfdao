@@ -43,7 +43,12 @@ htmlcov/
 *.swp
 *.swo
 *~
+
+# macOS
 .DS_Store
+._*
+.AppleDouble
+.LSOverride
 
 # Jupyter
 .ipynb_checkpoints

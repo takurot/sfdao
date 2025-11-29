@@ -32,12 +32,23 @@ SFDAOは、金融業界向けの合成データ（Synthetic Data）の品質を�
 git clone https://github.com/takurot/sfdao.git
 cd sfdao
 
-# 依存関係のインストール
+# Poetryのインストール（まだの場合）
+curl -sSL https://install.python-poetry.org | python3 -
+
+# PATHの設定（~/.zshrc または ~/.bash_profile に追加）
+export PATH="$HOME/.local/bin:$PATH"
+
+# 依存関係のインストール（pyproject.toml作成後）
 poetry install
 
 # 仮想環境の有効化
 poetry shell
+
+# macOS固有: WeasyPrint用の依存関係（PDF生成機能用）
+brew install cairo pango gdk-pixbuf libffi
 ```
+
+**注意**: macOS環境では `._*` ファイルが自動生成されますが、.gitignoreで除外されます。
 
 ## Quick Start
 
