@@ -321,6 +321,7 @@ class SchemaExtractor:
 ## PR#3: Auto-Type Detection機能
 
 **目的**: カラムの型（数値、カテゴリ、日時、PII、フリーテキスト）を自動判定する
+**進捗**: ✅ TypeDetector 実装・単体テスト完了（PR#3）
 
 ### 実装モジュール
 
