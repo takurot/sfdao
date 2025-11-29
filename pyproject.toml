@@ -1,0 +1,52 @@
+[tool.poetry]
+name = "sfdao"
+version = "0.1.0"
+description = "Synthetic Finance Data Auditor & Optimizer"
+authors = ["SFDAO Team <team@sfdao.local>"]
+license = "MIT"
+readme = "README.md"
+package-mode = true
+packages = [{ include = "sfdao" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.2.3"
+numpy = "^1.26.4"
+scipy = "^1.13.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+pytest-cov = "^6.0.0"
+black = "^24.8.0"
+flake8 = "^7.1.1"
+mypy = "^1.13.0"
+bandit = "^1.7.9"
+pandas-stubs = "^2.2.3.241126"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "--cov=sfdao --cov-report=term-missing"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203", "W503"]
+per-file-ignores = {"tests/*" = ["S101"]}
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unused_configs = true
+mypy_path = "sfdao"
+
+[tool.bandit]
+targets = ["sfdao"]
+skips = ["B101"]
+
+[build-system]
+requires = ["poetry-core>=1.8.0"]
+build-backend = "poetry.core.masonry.api"
