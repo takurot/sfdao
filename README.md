@@ -38,10 +38,10 @@ curl -sSL https://install.python-poetry.org | python3 -
 # PATHの設定（~/.zshrc または ~/.bash_profile に追加）
 export PATH="$HOME/.local/bin:$PATH"
 
-# 依存関係のインストール（pyproject.toml作成後）
+# 依存関係のインストール（pyproject.toml/poetry.lockに基づく）
 poetry install
 
-# 仮想環境の有効化
+# 仮想環境の有効化（必要に応じて）
 poetry shell
 
 # macOS固有: WeasyPrint用の依存関係（PDF生成機能用）
@@ -63,6 +63,13 @@ sfdao audit \
   --config config.yaml \
   --output report.html \
   --format html,pdf
+
+# テスト用の簡易合成データ生成
+poetry run python -m sfdao.scripts.generate_test_synthetic_data \
+  tests/fixtures/creditcard_real_sample.csv \
+  tests/fixtures/creditcard_synthetic.csv \
+  --n-samples 500 \
+  --random-state 42
 ```
 
 ## Development
