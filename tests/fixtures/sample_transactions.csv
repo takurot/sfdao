@@ -1,0 +1,6 @@
+transaction_id,amount,balance,timestamp,customer_id,description
+1,100.50,1000.00,2024-01-01T10:00:00Z,C001,"Payment for invoice 123"
+2,200.00,1200.00,2024-01-02T11:00:00Z,C002,"Refund processed"
+3,-50.00,1150.00,2024-01-03T12:30:00Z,C001,"ATM withdrawal"
+4,75.25,1225.25,2024-01-04T09:15:00Z,C003,"Coffee shop purchase"
+5,,1225.25,2024-01-05T14:45:00Z,C004,""

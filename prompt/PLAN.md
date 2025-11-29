@@ -219,6 +219,7 @@ jobs:
 ## PR#2: Data Ingestion基本機能
 
 **目的**: CSVファイルを読み込み、基本的なスキーマ情報を抽出する
+**進捗**: ✅ CSVLoader/SchemaExtractor 実装・単体/統合テスト完了（PR#2: Data ingestion basic functionality 作成済み）
 
 ### 実装モジュール
 
@@ -971,7 +972,8 @@ Phase 1完了後、以下の機能拡張を検討します：
 この計画書の内容に基づき、以下の順序で進めます：
 
 1. ✅ GitHubリポジトリの作成
-2. ⏳ PR#1: プロジェクト構造とCI/CD設定
-3. ⏳ PR#2以降: 機能実装（TDDベース）
+2. ✅ PR#1: プロジェクト構造とCI/CD設定
+3. ✅ PR#2: Data Ingestion基本機能（PR作成済み）
+4. ⏳ PR#2以降: 機能実装（TDDベース）
 
 実装の開始時期はユーザーの指示を待ちます。
