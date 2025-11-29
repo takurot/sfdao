@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from sfdao.ingestion.loader import CSVLoader
-from sfdao.ingestion.schema import ColumnInfo, DataSchema, SchemaExtractor
+from sfdao.ingestion.schema import DataSchema, SchemaExtractor
 
 
 @pytest.fixture()
