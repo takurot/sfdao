@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from typing import Iterable
 
 import numpy as np
-from scipy import stats
+from numpy.typing import NDArray
+from scipy import stats  # type: ignore[import-untyped]
 
 __all__ = ["KSTestResult", "StatisticalEvaluator"]
 
@@ -58,15 +59,15 @@ class StatisticalEvaluator:
         )
         return float(divergence)
 
-    def _prepare_array(self, values: Iterable[float]) -> np.ndarray:
+    def _prepare_array(self, values: Iterable[float]) -> NDArray[np.float64]:
         array = np.asarray(list(values), dtype=float)
         if array.size == 0:
-            return array
+            return array.astype(np.float64)
 
         if np.isnan(array).any():
             array = array[~np.isnan(array)]
-        return array
+        return array.astype(np.float64)
 
-    def _ensure_non_empty(self, real: np.ndarray, synthetic: np.ndarray) -> None:
+    def _ensure_non_empty(self, real: NDArray[np.float64], synthetic: NDArray[np.float64]) -> None:
         if real.size == 0 or synthetic.size == 0:
             raise ValueError("Real and synthetic arrays must be non-empty.")
