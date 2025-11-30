@@ -493,6 +493,7 @@ def test_set_custom_roles():
 ## PR#5: Basic Evaluator - 統計検定
 
 **目的**: 2つのデータセット（実データ vs 合成データ）の統計的類似性を評価する
+**進捗**: ✅ StatisticalEvaluator 実装・単体テスト完了（PR#5）
 
 ### 実装モジュール
 
