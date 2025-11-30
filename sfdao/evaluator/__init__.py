@@ -3,6 +3,7 @@ from .financial_facts import (
     FinancialFactsChecker,
     VolatilityClusteringResult,
 )
+from .privacy import PrivacyEvaluator
 from .statistical import KSTestResult, StatisticalEvaluator
 
 __all__ = [
@@ -10,5 +11,6 @@ __all__ = [
     "FinancialFactsChecker",
     "VolatilityClusteringResult",
     "KSTestResult",
+    "PrivacyEvaluator",
     "StatisticalEvaluator",
 ]
