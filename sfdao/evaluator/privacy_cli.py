@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from sfdao.evaluator.privacy import PrivacyEvaluator
 
@@ -23,7 +24,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_numeric_matrix(path: Path) -> np.ndarray:
+def load_numeric_matrix(path: Path) -> NDArray[np.float64]:
     df = pd.read_csv(path)
     numeric_df = df.select_dtypes(include=["number"])
     if numeric_df.empty:
