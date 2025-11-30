@@ -644,6 +644,7 @@ def test_reidentification_risk():
 ## PR#8: 評価スコアリング統合とレポート生成基盤
 
 **目的**: 各評価指標を統合し、総合スコアを計算する
+**進捗**: ✅ CompositeScorer/Reporter基盤実装・単体/E2Eスモークテスト完了（PR#8）
 
 ### 実装モジュール
 
