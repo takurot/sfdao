@@ -541,6 +541,7 @@ def test_js_divergence():
 ## PR#6: Financial Stylized Facts評価
 
 **目的**: 金融特有の統計的性質（Fat Tail、Volatility Clustering）を評価する
+**進捗**: ✅ FinancialFactsChecker 実装・単体テスト追加＆全テストパス済み（PR#6）
 
 ### 実装モジュール
 
