@@ -595,6 +595,7 @@ def test_volatility_clustering():
 ## PR#7: Privacy評価
 
 **目的**: 合成データからの個人情報再識別リスクを評価する
+**進捗**: ✅ PrivacyEvaluator 実装・単体/E2Eスモークテスト完了（PR#7）
 
 ### 実装モジュール
 
