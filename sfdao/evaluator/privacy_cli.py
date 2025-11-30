@@ -13,9 +13,7 @@ from sfdao.evaluator.privacy import PrivacyEvaluator
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run privacy evaluation on CSV files.")
     parser.add_argument("--real", required=True, type=Path, help="Path to real data CSV.")
-    parser.add_argument(
-        "--synthetic", required=True, type=Path, help="Path to synthetic data CSV."
-    )
+    parser.add_argument("--synthetic", required=True, type=Path, help="Path to synthetic data CSV.")
     parser.add_argument(
         "--output",
         required=True,

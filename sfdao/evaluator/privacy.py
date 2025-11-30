@@ -60,9 +60,7 @@ class PrivacyEvaluator:
             array = array[row_mask]
         return array.astype(np.float64, copy=False)
 
-    def _ensure_non_empty(
-        self, real: NDArray[np.float64], synthetic: NDArray[np.float64]
-    ) -> None:
+    def _ensure_non_empty(self, real: NDArray[np.float64], synthetic: NDArray[np.float64]) -> None:
         if real.size == 0 or synthetic.size == 0:
             raise ValueError("Real and synthetic datasets must be non-empty.")
 
