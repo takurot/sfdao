@@ -36,7 +36,9 @@ def test_weight_changes_adjust_total_score():
 def test_applies_constraint_penalty_when_below_threshold():
     metrics = {"quality": 0.9, "utility": 0.8, "privacy": 0.4}
     weights = {"quality": 0.4, "utility": 0.3, "privacy": 0.3}
-    constraints = [ScoreConstraint(metric="privacy", minimum=0.7, penalty=0.2, description="privacy floor")]
+    constraints = [
+        ScoreConstraint(metric="privacy", minimum=0.7, penalty=0.2, description="privacy floor")
+    ]
 
     scorer = CompositeScorer(weights, constraints=constraints)
     score = scorer.calculate(metrics)

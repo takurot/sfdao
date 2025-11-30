@@ -38,7 +38,9 @@ def test_scoring_and_reporter_pipeline(tmp_path: Path):
     composite = scorer.calculate(metrics)
 
     reporter = PlainTextReporter()
-    evaluation_report = EvaluationReport(metrics=metrics, composite_score=composite, metadata={"source": "smoke"})
+    evaluation_report = EvaluationReport(
+        metrics=metrics, composite_score=composite, metadata={"source": "smoke"}
+    )
     output_path = reporter.render_to_file(evaluation_report, tmp_path / "score_report.txt")
 
     content = output_path.read_text()

@@ -7,7 +7,9 @@ from sfdao.reporter.base import BaseReporter, EvaluationReport
 
 
 class DummyReporter(BaseReporter):
-    def generate(self, evaluation_report: EvaluationReport) -> str:  # pragma: no cover - thin wrapper
+    def generate(
+        self, evaluation_report: EvaluationReport
+    ) -> str:  # pragma: no cover - thin wrapper
         context = self.build_context(evaluation_report)
         return f"Overall Score: {context['composite_score']['total']:.3f}"
 
@@ -19,7 +21,9 @@ def test_base_reporter_builds_context_and_saves(tmp_path: Path):
 
     scorer = CompositeScorer(weights, constraints=constraints)
     composite = scorer.calculate(metrics)
-    report = EvaluationReport(metrics=metrics, composite_score=composite, metadata={"title": "demo"})
+    report = EvaluationReport(
+        metrics=metrics, composite_score=composite, metadata={"title": "demo"}
+    )
 
     reporter = DummyReporter()
     context = reporter.build_context(report)

@@ -90,7 +90,9 @@ class CompositeScorer:
         return CompositeScore(total=total_score, components=components, penalties=applied_penalties)
 
     def _normalized_weights(self) -> Dict[str, float]:
-        return {metric: weight / self._normalization_factor for metric, weight in self._weights.items()}
+        return {
+            metric: weight / self._normalization_factor for metric, weight in self._weights.items()
+        }
 
     def _compute_normalization_factor(self) -> float:
         factor = sum(self._weights.values())

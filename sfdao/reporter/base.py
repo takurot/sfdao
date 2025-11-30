@@ -64,7 +64,9 @@ class BaseReporter(ABC):
 class PlainTextReporter(BaseReporter):
     """Minimal reporter that emits a plain-text summary for smoke testing."""
 
-    def generate(self, evaluation_report: EvaluationReport) -> str:  # pragma: no cover - exercised via tests
+    def generate(
+        self, evaluation_report: EvaluationReport
+    ) -> str:  # pragma: no cover - exercised via tests
         context = self.build_context(evaluation_report)
         composite = context["composite_score"]
 
