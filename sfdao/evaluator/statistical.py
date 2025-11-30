@@ -43,10 +43,10 @@ class StatisticalEvaluator:
         if value_min == value_max:
             return 0.0
 
-        real_hist, bin_edges = np.histogram(real_arr, bins=bins, range=(value_min, value_max), density=True)
-        synthetic_hist, _ = np.histogram(
-            synthetic_arr, bins=bin_edges, density=True
+        real_hist, bin_edges = np.histogram(
+            real_arr, bins=bins, range=(value_min, value_max), density=True
         )
+        synthetic_hist, _ = np.histogram(synthetic_arr, bins=bin_edges, density=True)
 
         real_prob = real_hist + 1e-12
         synthetic_prob = synthetic_hist + 1e-12
