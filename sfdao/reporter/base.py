@@ -74,7 +74,9 @@ class PlainTextReporter(BaseReporter):
 
         for name, values in composite["components"].items():
             lines.append(
-                f"- {name}: value={values['value']:.3f}, weight={values['weight']:.3f}, weighted={values['weighted']:.3f}"
+                f"- {name}: value={values['value']:.3f}, "
+                f"weight={values['weight']:.3f}, "
+                f"weighted={values['weighted']:.3f}"
             )
 
         if composite["penalties"]:
