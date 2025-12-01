@@ -4,6 +4,13 @@ from .financial_facts import (
     VolatilityClusteringResult,
 )
 from .privacy import PrivacyEvaluator
+from .scoring import (
+    CompositeScore,
+    CompositeScorer,
+    ScoreComponent,
+    ScoreConstraint,
+    ScorePenalty,
+)
 from .statistical import KSTestResult, StatisticalEvaluator
 
 __all__ = [
@@ -12,5 +19,10 @@ __all__ = [
     "VolatilityClusteringResult",
     "KSTestResult",
     "PrivacyEvaluator",
+    "CompositeScore",
+    "CompositeScorer",
+    "ScoreComponent",
+    "ScoreConstraint",
+    "ScorePenalty",
     "StatisticalEvaluator",
 ]
