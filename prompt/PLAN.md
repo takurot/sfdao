@@ -849,11 +849,12 @@ Tests: `tests/e2e/test_full_pipeline.py`
 ## PR#12: `example/` サンプルプロジェクト追加
 
 **目的**: `sfdao` を初見のユーザーでも最短で試せるよう、`example/` 配下に「データ準備 → 監査 → レポート出力」までを再現できるサンプルプロジェクトを追加する。
+**進捗**: ✅ `example/` サンプルプロジェクト追加・E2Eスモークテスト追加（PR#12）
 
 ### 成果物（案）
 
 - `example/README.md`: 実行手順（Poetry前提）と期待する出力例
-- `example/data/`: 例用の小さな実データ（もしくは生成スクリプトで作成）
+- `example/data/`: 例用の小さな実データ（`creditcard_real_sample.csv`）
 - `example/scripts/`:
   - 合成データ生成（`python -m sfdao.scripts.generate_test_synthetic_data ...` のラッパー）
   - 監査実行（`sfdao audit ...`）のワンショットスクリプト（任意）
@@ -867,11 +868,13 @@ Tests: `tests/e2e/test_full_pipeline.py`
 
 ### タスク
 
-- [ ] `example/` ディレクトリ構成を決定し、必要ファイルを追加
-- [ ] 例用データを同梱する（サイズ最小）か、seed固定の生成スクリプトで作るかを決める
-- [ ] 合成データ生成手順（`sfdao/scripts/generate_test_synthetic_data.py`）をサンプルに組み込む
-- [ ] `sfdao audit` の実行例（console出力/ファイル出力）を `example/README.md` に記載
-- [ ] `tests/e2e/` に `example/` のスモークテストを追加（CIで実行）
+- [x] `example/` ディレクトリ構成を決定し、必要ファイルを追加
+- [x] 例用データを同梱する（サイズ最小）か、seed固定の生成スクリプトで作るかを決める
+- [x] 合成データ生成手順（`sfdao/scripts/generate_test_synthetic_data.py`）をサンプルに組み込む
+- [x] `sfdao audit` の実行例（console出力/ファイル出力）を `example/README.md` に記載
+- [x] `tests/e2e/` に `example/` のスモークテストを追加（CIで実行）
+
+Tests: `tests/e2e/test_example_project_smoke.py`
 
 ---
 
