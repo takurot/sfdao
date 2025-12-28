@@ -840,6 +840,35 @@ def test_full_audit_pipeline():
 
 ---
 
+## PR#12: `example/` サンプルプロジェクト追加
+
+**目的**: `sfdao` を初見のユーザーでも最短で試せるよう、`example/` 配下に「データ準備 → 監査 → レポート出力」までを再現できるサンプルプロジェクトを追加する。
+
+### 成果物（案）
+
+- `example/README.md`: 実行手順（Poetry前提）と期待する出力例
+- `example/data/`: 例用の小さな実データ（もしくは生成スクリプトで作成）
+- `example/scripts/`:
+  - 合成データ生成（`python -m sfdao.scripts.generate_test_synthetic_data ...` のラッパー）
+  - 監査実行（`sfdao audit ...`）のワンショットスクリプト（任意）
+- `example/output/`: 生成物の出力先（成果物は原則コミットしない）
+
+### 受け入れ条件（DoD）
+
+- `poetry install` 後に、README通りの手順で `example/output/report.(txt|html|pdf)` のいずれかが生成できる
+- 例のコマンドが相対パスで成立し、`example/` 単体で読める（テスト用パスに依存しない）
+- CIで軽量スモーク（例: 生成→`sfdao audit`→レポート生成）を実行可能
+
+### タスク
+
+- [ ] `example/` ディレクトリ構成を決定し、必要ファイルを追加
+- [ ] 例用データを同梱する（サイズ最小）か、seed固定の生成スクリプトで作るかを決める
+- [ ] 合成データ生成手順（`sfdao/scripts/generate_test_synthetic_data.py`）をサンプルに組み込む
+- [ ] `sfdao audit` の実行例（console出力/ファイル出力）を `example/README.md` に記載
+- [ ] `tests/e2e/` に `example/` のスモークテストを追加（CIで実行）
+
+---
+
 ## テストデータ準備
 
 各PRで使用するテストデータを `tests/fixtures/` に用意します。
@@ -942,12 +971,40 @@ if __name__ == "__main__":
 
 ## 次のステップ（Phase 2への準備）
 
-Phase 1完了後、以下の機能拡張を検討します：
+Phase 2では「生成＋整合性」を最小スコープで成立させ、`audit` と接続した end-to-end を完成させます。
 
-- Hybrid Generator実装
-- Constraint & Logic Guard
-- Scenario Injection
-- Rule Learning Engine（Phase 3）
+### Phase 2 実装タスク案（PR分割の例）
+
+1. **Generator基盤の確立**
+   - 生成器インターフェース（入力スキーマ/seed/出力整合性）を定義
+   - 設定（YAML/JSON）をPydanticでバリデーションできるようにする
+
+2. **Baseline Generator の実装**
+   - まずは依存が少ない方式（統計サンプリング/ガウスコピュラ等）で数値列の生成を実装
+   - 列名/型/欠損の取り扱いポリシーを明文化
+
+3. **Constraint & Logic Guard**
+   - 会計恒等式/残高整合性/時間順序/値域制約などのルール定義
+   - 違反の「検出/除外/補正」の方針を選べるようにする
+   - 監査レポートに制約違反の概要を含める（Phase 1レポートと整合）
+
+4. **Scenario Injection（手動設定）**
+   - シナリオをYAMLで宣言し、生成データ（または入力データ）に変換として適用
+   - 例: tail risk注入、カテゴリ比率変更、期間ショック、外れ値増加
+
+5. **CLI/ワークフロー統合**
+   - `sfdao generate`（生成）→ `sfdao audit`（評価）の基本導線を提供
+   - 必要に応じて `sfdao run`（generate→guard→audit）等の一括コマンドを検討
+
+6. **E2E/ドキュメント/サンプル拡充**
+   - `example/` を Phase 2 のワークフロー（生成→監査）に対応させる
+   - CIでPhase 2の最小E2E（小規模データ）をスモーク実行
+
+### Phase 2完了の定義（DoD）
+
+- 生成（CSV出力）→ 制約適用（必要なら）→ 監査（レポート出力）が一連で実行できる
+- seed固定で再現性が担保される（同一入力/設定で同一出力）
+- `example/` の手順が最新実装と一致している
 
 ---
 
