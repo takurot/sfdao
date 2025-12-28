@@ -53,11 +53,14 @@ class BaseReporter(ABC):
         content = self.generate(evaluation_report)
         output_path = Path(path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(content, encoding="utf-8")
+        if isinstance(content, bytes):
+            output_path.write_bytes(content)
+        else:
+            output_path.write_text(content, encoding="utf-8")
         return output_path
 
     @abstractmethod
-    def generate(self, evaluation_report: EvaluationReport) -> str:
+    def generate(self, evaluation_report: EvaluationReport) -> str | bytes:
         raise NotImplementedError
 
 

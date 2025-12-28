@@ -68,6 +68,7 @@ reports/
 *.html
 *.pdf
 !docs/**/*.html
+!sfdao/reporter/templates/*.html
 
 # Logs
 *.log

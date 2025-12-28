@@ -20,6 +20,8 @@ from sfdao.evaluator.privacy import PrivacyEvaluator
 from sfdao.evaluator.statistical import StatisticalEvaluator
 from sfdao.ingestion.loader import CSVLoader
 from sfdao.reporter.base import EvaluationReport, PlainTextReporter
+from sfdao.reporter.html import HTMLReporter
+from sfdao.reporter.pdf import PDFReporter
 
 __all__ = ["run_audit"]
 
@@ -126,20 +128,23 @@ def run_audit(
         },
     )
 
-    # Generate plain text report
-    reporter = PlainTextReporter()
-    report_text = reporter.generate(report)
+    reporter = _select_reporter(output_path)
 
     # Output report
     if output_path:
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(report_text, encoding="utf-8")
+        reporter.render_to_file(report, output_path)
         if not quiet:
             console.print(f"[green]✓[/green] Report saved to: {output_path}")
     else:
+        report_text = reporter.generate(report)
         if not quiet:
             console.print("\n[bold]Evaluation Report:[/bold]")
-            console.print(report_text)
+            if isinstance(report_text, bytes):
+                console.print(
+                    "[yellow]Binary report generated. Use --output to save to a file.[/yellow]"
+                )
+            else:
+                console.print(report_text)
 
     if not quiet:
         console.print(
@@ -221,3 +226,15 @@ def _summarize_financial_facts(
         summary["volatility_note"] = "insufficient data for volatility clustering"
 
     return summary
+
+
+def _select_reporter(output_path: Optional[Path]) -> PlainTextReporter | HTMLReporter | PDFReporter:
+    if output_path is None:
+        return PlainTextReporter()
+
+    suffix = output_path.suffix.lower()
+    if suffix in {".html", ".htm"}:
+        return HTMLReporter()
+    if suffix == ".pdf":
+        return PDFReporter()
+    return PlainTextReporter()
