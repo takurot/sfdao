@@ -56,20 +56,22 @@ brew install cairo pango gdk-pixbuf libffi
 # 基本的な評価の実行
 sfdao audit --real data/real.csv --synthetic data/synthetic.csv --output report.html
 
-# 詳細設定を使用した評価
-sfdao audit \
-  --real data/real.csv \
-  --synthetic data/synthetic.csv \
-  --config config.yaml \
-  --output report.html \
-  --format html,pdf
+# 出力形式は拡張子で自動判定（.txt/.html/.pdf）
+sfdao audit --real data/real.csv --synthetic data/synthetic.csv --output report.txt
+sfdao audit --real data/real.csv --synthetic data/synthetic.csv --output report.pdf
 
 # テスト用の簡易合成データ生成
 poetry run python -m sfdao.scripts.generate_test_synthetic_data \
   tests/fixtures/creditcard_real_sample.csv \
-  tests/fixtures/creditcard_synthetic.csv \
+  ./synthetic.csv \
   --n-samples 500 \
   --random-state 42
+
+# 生成した合成データを監査
+poetry run sfdao audit \
+  --real tests/fixtures/creditcard_real_sample.csv \
+  --synthetic ./synthetic.csv \
+  --output report.html
 ```
 
 ## Development
@@ -133,26 +135,28 @@ sfdao/
 
 ## Documentation
 
-- [実装計画書](IMPLEMENTATION_PLAN.md)
+- [実装計画書](prompt/PLAN.md)
 - [製品仕様書](prompt/SPEC.md)
-- [API リファレンス](docs/api/)（準備中）
-- [評価指標の詳細](docs/METRICS.md)（準備中）
+- [使い方](docs/USAGE.md)
+- [アーキテクチャ](docs/ARCHITECTURE.md)
+- [Python API](docs/API.md)
+- [評価指標](docs/METRICS.md)
 
 ## Roadmap
 
 ### Phase 1: "The Auditor" (MVP) - 現在のフェーズ
 
 - [x] プロジェクト構造とCI/CD設定
-- [ ] Data Ingestion基本機能
-- [ ] Auto-Type Detection
-- [ ] 金融ドメイン定義
-- [ ] Basic Evaluator（統計検定）
-- [ ] Financial Stylized Facts評価
-- [ ] Privacy評価
-- [ ] 評価スコアリング統合
-- [ ] CLIインターフェース
-- [ ] レポート生成機能
-- [ ] 統合テストとドキュメント
+- [x] Data Ingestion基本機能
+- [x] Auto-Type Detection
+- [x] 金融ドメイン定義
+- [x] Basic Evaluator（統計検定）
+- [x] Financial Stylized Facts評価
+- [x] Privacy評価
+- [x] 評価スコアリング統合
+- [x] CLIインターフェース
+- [x] レポート生成機能
+- [x] 統合テストとドキュメント
 
 ### Phase 2: "The Generator & Logic"
 
