@@ -62,16 +62,16 @@ sfdao audit --real data/real.csv --synthetic data/synthetic.csv --output report.
 
 # テスト用の簡易合成データ生成
 poetry run python -m sfdao.scripts.generate_test_synthetic_data \
-  tests/fixtures/creditcard_real_sample.csv \
-  ./synthetic.csv \
+  example/data/creditcard_real_sample.csv \
+  example/output/creditcard_synthetic.csv \
   --n-samples 500 \
   --random-state 42
 
 # 生成した合成データを監査
 poetry run sfdao audit \
-  --real tests/fixtures/creditcard_real_sample.csv \
-  --synthetic ./synthetic.csv \
-  --output report.html
+  --real example/data/creditcard_real_sample.csv \
+  --synthetic example/output/creditcard_synthetic.csv \
+  --output example/output/report.html
 ```
 
 ## Development
@@ -137,6 +137,7 @@ sfdao/
 
 - [実装計画書](prompt/PLAN.md)
 - [製品仕様書](prompt/SPEC.md)
+- [Example](example/README.md)
 - [使い方](docs/USAGE.md)
 - [アーキテクチャ](docs/ARCHITECTURE.md)
 - [Python API](docs/API.md)
