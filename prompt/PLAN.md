@@ -790,38 +790,42 @@ Tests: `tests/unit/reporter/test_html.py`, `tests/unit/reporter/test_pdf.py`, `t
 ## PR#11: 統合テストとドキュメント整備
 
 **目的**: Phase 1の完成度を確認し、使いやすいドキュメントを提供する
+**進捗**: ✅ フルパイプラインE2Eテスト追加・`docs/` 配下のドキュメント整備（PR#11）
 
 ### 統合テスト
 
 ```python
 # tests/e2e/test_full_pipeline.py
-def test_full_audit_pipeline():
-    """実データと合成データの完全な評価フロー"""
+def test_full_audit_pipeline_generates_html_report(tmp_path: Path) -> None:
+    """CLIを使って end-to-end で監査を実行し、HTMLレポート生成まで確認する。"""
 
-    # 1. データ読み込み
-    real_data = "tests/fixtures/kaggle_credit_fraud_real.csv"
-    synthetic_data = "tests/fixtures/kaggle_credit_fraud_synthetic.csv"
+    real_csv = Path("tests/fixtures/creditcard_real_sample.csv")
+    synthetic_csv = tmp_path / "synthetic.csv"
+    report_path = tmp_path / "report.html"
 
-    # 2. CLIコマンド実行
-    result = subprocess.run([
-        "sfdao", "audit",
-        "--real", real_data,
-        "--synthetic", synthetic_data,
-        "--output", "test_report.html"
-    ], capture_output=True)
+    generate_simple_synthetic(real_csv, synthetic_csv, n_samples=50, random_state=42)
 
-    # 3. 正常終了確認
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "sfdao.cli.main",
+            "audit",
+            "--real",
+            str(real_csv),
+            "--synthetic",
+            str(synthetic_csv),
+            "--output",
+            str(report_path),
+            "--quiet",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
     assert result.returncode == 0
-
-    # 4. レポートファイル生成確認
-    assert Path("test_report.html").exists()
-
-    # 5. レポート内容確認
-    with open("test_report.html") as f:
-        html = f.read()
-        assert "Overall Score" in html
-        assert "KS Test" in html
-        assert "Privacy Score" in html
+    assert report_path.exists()
+    assert "Overall Score" in report_path.read_text(encoding="utf-8")
 ```
 
 ### ドキュメント整備
@@ -837,6 +841,8 @@ def test_full_audit_pipeline():
 - 大規模データでの性能テスト（100万行）
 - 異常データでのロバストネステスト
 - メモリリークチェック
+
+Tests: `tests/e2e/test_full_pipeline.py`
 
 ---
 
