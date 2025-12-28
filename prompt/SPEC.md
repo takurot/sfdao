@@ -134,6 +134,7 @@
 ### 3.7 CLI / API (Phase 1 MVP)
 * CLIで監査を実行: `sfdao audit --real <csv> --synthetic <csv> [--output <path>]`
 * 設定ファイル（YAML/JSON）で重み・閾値・評価対象カラムを指定可能にする。
+* リポジトリ同梱の `example/` で、最小の「データ準備 → 監査 → レポート出力」フローを再現できるようにする。
 * バリデーションエラー時は非0終了コードとエラーメッセージを返す。
 * APIはPhase 2以降でFastAPIにより提供。
 
@@ -164,6 +165,7 @@ $$
 ### Phase 2: "The Generator & Logic" (生成と整合性)
 * **目標**: 高品質かつ矛盾のないデータを生成する。
 * **機能**: Hybrid Generator (CTGAN + Rules), Constraint & Logic Guard, Scenario Injection (手動設定)。
+* **提供形態（最小）**: CLIで合成CSVを出力し、`audit` と接続した end-to-end を提供する。
 * **対象**: POC用のデータが必要な開発部門。
 
 ### Phase 3: "The Optimizer" (自動化とAI化)
