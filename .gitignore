@@ -62,6 +62,8 @@ data/
 *.json
 !tests/fixtures/*.csv
 !tests/fixtures/*.json
+!example/data/
+!example/data/*.csv
 
 # Reports
 reports/
