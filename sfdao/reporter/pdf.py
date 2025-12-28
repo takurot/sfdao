@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 from sfdao.reporter.base import BaseReporter, EvaluationReport
 from sfdao.reporter.html import HTMLReporter
 
@@ -28,7 +30,7 @@ class PDFReporter(BaseReporter):
             )
 
         try:
-            return HTML(string=html).write_pdf()
+            return cast(bytes, HTML(string=html).write_pdf())
         except Exception as exc:  # pragma: no cover - environment dependent
             raise RuntimeError(
                 "PDF generation failed. Ensure WeasyPrint system dependencies are installed."
