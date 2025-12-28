@@ -47,6 +47,7 @@
 * 機能:
     * **Auto-Type Detection**: 数値、カテゴリ、日時、PII（個人特定情報）、フリーテキスト（摘要）の自動判定。
     * **Relationship Mapping**: テーブル間の外部キー結合（ER図）の定義。
+    * **Data Quality Check**: 欠損率・重複・型不整合の検知と、評価対象カラムの選択。
 
 #### 3.1.2 ドメイン定義（金融特化）
 * カラムの役割定義: `ID`, `Transaction_Amount`, `Balance`, `Timestamp`, `Counterparty`, `Description`
@@ -58,7 +59,7 @@
 
 * **Deep Learning Models**:
     * CTGAN / TVAE: 一般的なTabularデータ用。
-    * TimeGAN / DoppleGANger: 時系列データ用。
+    * TimeGAN / DoppelGANger: 時系列データ用。
 * **Statistical/Financial Models**:
     * Gaussian Copula: 変数間の相関構造を厳密に維持したい場合。
     * GARCH / VAR: ボラティリティクラスタリング（金融時系列特有の変動）の再現。
@@ -98,6 +99,11 @@
 * **Graph Metrics**: 取引ネットワークの次数分布、クラスタ係数。
 * **Downstream Task**: XGBoost/LightGBM等での分類精度（Real vs Synthetic）。
 
+#### 3.4.4 評価出力 (Output Schema)
+* **Metrics**: `quality`, `utility`, `privacy` の各スコア（0-1、1が良い）。
+* **Composite Score**: 総合スコアと内訳（weight, weighted value）、制約違反ペナルティ。
+* **Metadata**: 入力データ統計（行数/列数/数値列割合）、プライバシー指標（median DCR など）。
+
 ### 3.5 Rule Learning & Optimization Core (差別化の中核)
 
 評価結果に基づき、Generatorのパラメータ $\theta$ を最適化する。
@@ -123,6 +129,13 @@
 #### 3.6.2 レポーティング
 * PDF/HTML形式での監査レポート出力。
 * 「改善の履歴（Before/After）」と「なぜそのパラメータを採用したか」の技術的根拠。
+* Phase 1はCLIのプレーンテキスト出力を基本とし、HTML/PDFは後続の拡張で提供。
+
+### 3.7 CLI / API (Phase 1 MVP)
+* CLIで監査を実行: `sfdao audit --real <csv> --synthetic <csv> [--output <path>]`
+* 設定ファイル（YAML/JSON）で重み・閾値・評価対象カラムを指定可能にする。
+* バリデーションエラー時は非0終了コードとエラーメッセージを返す。
+* APIはPhase 2以降でFastAPIにより提供。
 
 ---
 
@@ -144,7 +157,8 @@ $$
 
 ### Phase 1: "The Auditor" (MVP - 診断ツールとしての確立)
 * **目標**: 既存データに対する「評価レポート」だけで価値を出す。
-* **機能**: Ingestion, Basic Evaluator, Financial Stylized Facts Check, レポート出力。
+* **機能**: Ingestion, Basic Evaluator, Financial Stylized Facts Check, CLIレポート出力。
+* **入力/出力**: CSV入力、プレーンテキスト/HTML出力（PDFは後続）。
 * **対象**: 既に何らかのデータを持つ金融機関・分析会社。
 
 ### Phase 2: "The Generator & Logic" (生成と整合性)

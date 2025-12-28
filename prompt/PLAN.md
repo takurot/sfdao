@@ -687,6 +687,7 @@ def test_composite_score_calculation():
 ## PR#9: CLIインターフェース実装
 
 **目的**: コマンドラインから評価を実行できるようにする
+**進捗**: ✅ CLI auditで統計/プライバシー/金融ファクト評価を統合し、メタデータ出力と単体テスト更新まで完了（PR#9）
 
 ### 実装モジュール
 
@@ -733,6 +734,8 @@ def test_parse_basic_arguments():
 - エラーメッセージのテスト
 - ヘルプ表示のテスト
 - End-to-Endテスト（実際のファイルで実行）
+
+Tests: `tests/unit/cli/test_main.py`
 
 ---
 
