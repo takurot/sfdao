@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 from sfdao.reporter.base import BaseReporter, EvaluationReport
 from sfdao.reporter.html import HTMLReporter
 
