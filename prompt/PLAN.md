@@ -742,6 +742,7 @@ Tests: `tests/unit/cli/test_main.py`
 ## PR#10: HTML/PDFレポート出力機能
 
 **目的**: 評価結果を見やすいレポートとして出力する
+**進捗**: ✅ HTML/PDF Reporter実装・テンプレート追加・単体/統合テスト追加（PR#10）
 
 ### 実装モジュール
 
@@ -781,6 +782,8 @@ def test_generate_html_report():
 - グラフ生成のテスト
 - PDF変換のテスト
 - 日本語文字化けチェック
+
+Tests: `tests/unit/reporter/test_html.py`, `tests/unit/reporter/test_pdf.py`, `tests/integration/reporter/test_audit_html_output.py`
 
 ---
 

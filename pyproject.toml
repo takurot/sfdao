@@ -7,6 +7,7 @@ license = "MIT"
 readme = "README.md"
 package-mode = true
 packages = [{ include = "sfdao" }]
+include = ["sfdao/reporter/templates/*.html"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -16,6 +17,8 @@ scipy = "^1.13.1"
 pydantic = "^2.12.5"
 typer = "^0.15.1"
 rich = "^13.9.4"
+jinja2 = "^3.1.6"
+weasyprint = "^67.0"
 
 [tool.poetry.scripts]
 sfdao = "sfdao.cli.main:app"
