@@ -11,6 +11,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 from rich.console import Console
 
 from sfdao.evaluator.scoring import CompositeScorer
@@ -184,8 +185,8 @@ def _compute_financial_facts(
     results: dict[str, dict[str, dict[str, float | int | str]]] = {}
 
     for col in shared_numeric:
-        real_values = real_df[col].dropna().values
-        synthetic_values = synthetic_df[col].dropna().values
+        real_values: NDArray[np.float64] = real_df[col].dropna().to_numpy(dtype=float)
+        synthetic_values: NDArray[np.float64] = synthetic_df[col].dropna().to_numpy(dtype=float)
 
         if len(real_values) == 0 or len(synthetic_values) == 0:
             continue
@@ -200,7 +201,7 @@ def _compute_financial_facts(
 
 def _summarize_financial_facts(
     checker: FinancialFactsChecker,
-    values: np.ndarray,
+    values: NDArray[np.float64],
 ) -> dict[str, float | int | str]:
     summary: dict[str, float | int | str] = {}
 
