@@ -13,7 +13,9 @@ __all__ = ["HTMLReporter"]
 class HTMLReporter(BaseReporter):
     """Generate an HTML audit report using Jinja2 templates."""
 
-    def __init__(self, *, template_name: str = "report.html", template_dir: Path | None = None) -> None:
+    def __init__(
+        self, *, template_name: str = "report.html", template_dir: Path | None = None
+    ) -> None:
         if template_dir is None:
             template_dir = Path(__file__).parent / "templates"
 

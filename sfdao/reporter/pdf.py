@@ -25,9 +25,13 @@ class PDFReporter(BaseReporter):
 
     def _render_pdf(self, html: str) -> bytes:
         if HTML is None:
-            raise RuntimeError("WeasyPrint is not available. Install weasyprint to enable PDF output.")
+            raise RuntimeError(
+                "WeasyPrint is not available. Install weasyprint to enable PDF output."
+            )
 
         try:
             return HTML(string=html).write_pdf()
         except Exception as exc:  # pragma: no cover - environment dependent
-            raise RuntimeError("PDF generation failed. Ensure WeasyPrint system dependencies are installed.") from exc
+            raise RuntimeError(
+                "PDF generation failed. Ensure WeasyPrint system dependencies are installed."
+            ) from exc

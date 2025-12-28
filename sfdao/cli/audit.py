@@ -140,7 +140,9 @@ def run_audit(
         if not quiet:
             console.print("\n[bold]Evaluation Report:[/bold]")
             if isinstance(report_text, bytes):
-                console.print("[yellow]Binary report generated. Use --output to save to a file.[/yellow]")
+                console.print(
+                    "[yellow]Binary report generated. Use --output to save to a file.[/yellow]"
+                )
             else:
                 console.print(report_text)
 
