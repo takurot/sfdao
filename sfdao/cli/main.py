@@ -10,9 +10,11 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
+from pydantic import ValidationError
 from rich.console import Console
 
 from sfdao.cli.audit import run_audit
+from sfdao.config.loader import load_phase2_config
 
 __all__ = ["app"]
 
@@ -42,6 +44,15 @@ def validate_file_exists(path: Optional[Path], name: str) -> Path:
     if not path.is_file():
         raise typer.BadParameter(f"'{path}' is not a file.")
     return path
+
+
+def _load_phase2_config_or_exit(config_path: Path) -> None:
+    try:
+        load_phase2_config(config_path)
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ValidationError as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
 
 @app.callback()
@@ -128,6 +139,70 @@ def audit(
         quiet=quiet,
         console=console,
     )
+
+
+@app.command()
+def generate(
+    config: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--config",
+            "-c",
+            help="Path to Phase 2 YAML/JSON config file.",
+        ),
+    ] = None,
+    validate_only: Annotated[
+        bool,
+        typer.Option(
+            "--validate-only",
+            help="Validate the config file and exit without generating output.",
+        ),
+    ] = False,
+) -> None:
+    """Generate synthetic data (Phase 2).
+
+    Phase 2 implementation is incremental. In PR#13 this command supports config validation.
+    """
+    config_path = validate_file_exists(config, "config")
+    _load_phase2_config_or_exit(config_path)
+
+    if validate_only:
+        console.print("[green]✓[/green] Config is valid.")
+        return
+
+    raise typer.BadParameter("Generation is not implemented yet. Use --validate-only for now.")
+
+
+@app.command()
+def run(
+    config: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--config",
+            "-c",
+            help="Path to Phase 2 YAML/JSON config file.",
+        ),
+    ] = None,
+    validate_only: Annotated[
+        bool,
+        typer.Option(
+            "--validate-only",
+            help="Validate the config file and exit without running the pipeline.",
+        ),
+    ] = False,
+) -> None:
+    """Run generate → guard → audit pipeline (Phase 2).
+
+    Phase 2 implementation is incremental. In PR#13 this command supports config validation.
+    """
+    config_path = validate_file_exists(config, "config")
+    _load_phase2_config_or_exit(config_path)
+
+    if validate_only:
+        console.print("[green]✓[/green] Config is valid.")
+        return
+
+    raise typer.BadParameter("Pipeline is not implemented yet. Use --validate-only for now.")
 
 
 if __name__ == "__main__":
