@@ -10,6 +10,7 @@ from numpy.typing import NDArray
 from sfdao.generator.base import BaseGenerator
 from sfdao.ingestion.type_detector import ColumnType, TypeDetector
 from sfdao.guard.engine import GuardEngine
+from sfdao.scenario.engine import ScenarioEngine
 
 __all__ = ["BaselineGenerator"]
 
@@ -48,11 +49,18 @@ class BaselineGenerator(BaseGenerator):
     - Missing values: reproduce per-column missing rate.
     """
 
-    def __init__(self, *, seed: int | None = None, guard: GuardEngine | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        seed: int | None = None,
+        guard: GuardEngine | None = None,
+        scenario: ScenarioEngine | None = None,
+    ) -> None:
         super().__init__(seed=seed)
         self._column_order: list[str] = []
         self._models: dict[str, _ColumnModel] = {}
         self.guard = guard
+        self.scenario = scenario
 
     def fit(self, real: pd.DataFrame) -> None:
         if real.empty:
@@ -79,6 +87,9 @@ class BaselineGenerator(BaseGenerator):
             data[column] = self._sample_column(model, rng, n_samples)
 
         df = pd.DataFrame(data, columns=self._column_order)
+
+        if self.scenario:
+            df, _ = self.scenario.apply(df)
 
         if self.guard:
             df, _ = self.guard.apply(df)
