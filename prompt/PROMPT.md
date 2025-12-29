@@ -70,6 +70,18 @@ gh pr create --title "PR#<番号>: <タイトル>" --body "<説明>"
 ```
 - PRテンプレートに従って記述
 - 関連するIssueやPRをリンク
+- **注意**: `--body "<説明>"` は改行・バッククォート・クォート（`"`/`'`）・`$` などを含むと、シェル解釈でPR本文が崩れたり欠けたりしやすい
+  - 複数行やMarkdown本文は `--body-file` を推奨（stdinでも可）
+    ```bash
+    gh pr create --title "PR#<番号>: <タイトル>" --body-file - <<'EOF'
+    ## Summary
+    - ...
+
+    ## Tests
+    - poetry run pytest
+    EOF
+    ```
+  - 作成後に `gh pr view <番号> --json title,body` 等でタイトル/本文が意図通りか確認する
 
 ### 8. CI結果の確認と対応
 ```bash
