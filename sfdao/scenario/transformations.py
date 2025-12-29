@@ -42,7 +42,8 @@ def scale(
     factor = params.get("factor", 1.0)
     # Ensure numeric
     numeric = pd.to_numeric(series, errors="coerce")
-    return numeric * factor
+    result = numeric * factor
+    return result  # type: ignore[no-any-return]
 
 
 @TransformationRegistry.register("shift")
@@ -53,7 +54,8 @@ def shift(
 ) -> pd.Series:
     value = params.get("value", 0.0)
     numeric = pd.to_numeric(series, errors="coerce")
-    return numeric + value
+    result = numeric + value
+    return result  # type: ignore[no-any-return]
 
 
 @TransformationRegistry.register("clip")

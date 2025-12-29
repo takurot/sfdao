@@ -8,7 +8,7 @@ from sfdao.ingestion.loader import CSVLoader
 from sfdao.cli.audit import run_audit
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Benchmark SFDAO generation and audit.")
     parser.add_argument("--real", required=True, type=Path, help="Path to real data CSV")
     parser.add_argument("--output-dir", required=True, type=Path, help="Directory to save outputs")
@@ -23,7 +23,7 @@ def main():
     synthetic_path = output_dir / "synthetic_benchmark.csv"
     report_path = output_dir / "audit_report_benchmark.txt"
 
-    console.print(f"[bold blue]Starting Benchmark[/bold blue]")
+    console.print("[bold blue]Starting Benchmark[/bold blue]")
     console.print(f"Real Data: {real_path}")
 
     # 1. Load Data
