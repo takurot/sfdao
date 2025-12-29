@@ -1104,7 +1104,7 @@ Tests: `tests/unit/guard/test_rules.py`, `tests/integration/test_guard_with_gene
 #### PR#16: Scenario Injection（手動シナリオ）
 
 **目的**: 生成データに対して「外れ値増加」「期間ショック」「カテゴリ比率変更」などを設定ファイルで適用できるようにする。
-
+**進捗**: ✅ ScenarioEngine 実装・基本変換（Scale/Shift/Clip/Outlier/Replace）実装・Generaror統合完了（PR#16）
 **成果物（案）**
 
 - シナリオ定義（YAML）と変換パイプライン（例: `sfdao/scenario/`）
@@ -1117,10 +1117,9 @@ Tests: `tests/unit/guard/test_rules.py`, `tests/integration/test_guard_with_gene
 
 **タスク**
 
-- [ ] 最小の変換セットを決める（scale/shift/clip/outlier/rate-change 等）
-- [ ] 数値/カテゴリ別に適用可能な変換を実装
-- [ ] 変換ログを metadata に統一フォーマットで格納
-
+- [x] 最小の変換セットを決める（scale/shift/clip/outlier/rate-change 等）
+- [x] 数値/カテゴリ別に適用可能な変換を実装
+- [-] 変換ログを metadata に統一フォーマットで格納 (Partial: Engine returns metadata, integration simplified)
 Tests: `tests/unit/scenario/test_injection.py`
 
 ---
