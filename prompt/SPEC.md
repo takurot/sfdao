@@ -138,6 +138,11 @@
 * バリデーションエラー時は非0終了コードとエラーメッセージを返す。
 * APIはPhase 2以降でFastAPIにより提供。
 
+#### Phase 2 MVP（案）
+* CLIで生成を実行: `sfdao generate --real <csv> --config <yaml> --output <csv>`
+* 生成→制約→監査の一括実行: `sfdao run --real <csv> --config <yaml> --outdir <dir> [--report <txt|html|pdf>]`
+* 大規模データ向けに、計算量が大きい指標（例: privacy）を設定によりサンプリング/近似に切り替え、レポートに「計算方法・サンプルサイズ・警告」を残す。
+
 ---
 
 ## 4. スコアリングと最適化ロジック
