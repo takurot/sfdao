@@ -39,9 +39,22 @@ macOS の場合:
 open example/output/report.html
 ```
 
-## 便利スクリプト（任意）
+
+## Phase 2 Workflow (Generate & Audit)
+
+`sfdao run` コマンドを使用すると、設定ファイルに基づいて「生成→監査→レポート」を一括で実行できます。
+
+### 実行手順
 
 ```bash
-# まとめて実行（生成→監査）
-bash example/scripts/run_example.sh
+poetry run sfdao run \
+  --real example/data/creditcard_real_sample.csv \
+  --config example/config/phase2.yaml \
+  --out-dir example/output_phase2
 ```
+
+### 期待する生成物
+
+- `example/output_phase2/synthetic.csv`
+- `example/output_phase2/report.html`
+
