@@ -1093,9 +1093,11 @@ Tests: `tests/unit/generator/test_baseline_generator.py`, `tests/e2e/test_genera
 
 **タスク**
 
-- [ ] 最小のルールセットを決める（例: 値域、欠損率、非負制約、単調増加timestamp、IDユニーク等）
-- [ ] ルールの実装と適用順序を定義
-- [ ] 違反の記録フォーマット（metadata用）を定義
+- [x] 最小のルールセットを決める（例: 値域、欠損率、非負制約、単調増加timestamp、IDユニーク等）
+- [x] ルールの実装と適用順序を定義
+- [x] 違反の記録フォーマット（metadata用）を定義
+
+**進捗**: ✅ Guardエンジン/ルール実装・統合テスト完了（PR#15）
 
 Tests: `tests/unit/guard/test_rules.py`, `tests/integration/test_guard_with_generate.py`
 
@@ -1167,19 +1169,140 @@ Tests: `tests/e2e/test_run_pipeline_smoke.py`
 
 **タスク**
 
-- [ ] ベンチ実行のI/F（入力/サイズ/回数/出力形式）を決める
-- [ ] `audit` の性能ボトルネックを可視化する（最低限、time/memory）
-- [ ] privacy サンプルサイズ等の設定項目を追加し、レポートに反映する
+- [x] ベンチ実行のI/F（入力/サイズ/回数/出力形式）を決める
+- [x] `audit` の性能ボトルネックを可視化する（最低限、time/memory）
+- [x] privacy サンプルサイズ等の設定項目を追加し、レポートに反映する
 
 Tests: `tests/e2e/test_benchmark_smoke.py`（最小。重い計測はCI外）
 
 ### Phase 2完了の定義（DoD）
 
-- [ ] 生成（CSV出力）→ 制約適用（必要なら）→ 監査（レポート出力）が一連で実行できる
-- [ ] seed固定で再現性が担保される（同一入力/設定で同一出力）
-- [ ] `example/` の手順が最新実装と一致している（設定ファイル含む）
-- [ ] CIで Phase 2 の最小E2E（小規模）がスモーク実行できる
-- [ ] ベンチマーク手順が整備され、サイズ別の目安（time/memory）が取得できる
+- [x] 生成（CSV出力）→ 制約適用（必要なら）→ 監査（レポート出力）が一連で実行できる
+- [x] seed固定で再現性が担保される（同一入力/設定で同一出力）
+- [x] `example/` の手順が最新実装と一致している（設定ファイル含む）
+- [x] CIで Phase 2 の最小E2E（小規模）がスモーク実行できる
+- [x] ベンチマーク手順が整備され、サイズ別の目安（time/memory）が取得できる
+
+---
+
+## Phase 3: Production Readiness & Advanced Features
+
+**対象フェーズ**: Phase 3 - "The Professional" (CI/CD, Advanced Gen/Eval, Release)
+**目的**: プロダクション利用に耐えうる品質（CI/CD、ML評価）と高度な生成機能を提供する。
+
+### Phase 3 PR計画
+
+#### PR#19: CI/CD Hardening & Optimization
+
+**目的**: 開発サイクルを加速し、品質保証を強化する。
+
+**成果物（案）**
+
+- `.github/workflows/ci.yml` の最適化（Dependency/Pre-commit caching）
+- Release Workflow（`.github/workflows/release.yml`）でタグプッシュ時に PyPI Publish と GitHub Release
+- `docs/CONTRIBUTING.md` の更新
+
+**受け入れ条件（DoD）**
+
+- CI 実行時間が30%以上短縮（キャッシュヒット時）
+- Python 3.10, 3.11, 3.12 のマトリクスが全てパス
+- タグプッシュで PyPI にテストリリースがデプロイできる
+
+**タスク**
+
+- [ ] Poetry の dependency cache を GitHub Actions に追加
+- [ ] Python 3.12 をマトリクスに追加し、テストがパスすることを確認
+- [ ] `release.yml` を作成（trusted publishing または API token）
+- [ ] リリースノート自動生成の検討
+
+Tests: 既存テストが全てパスすることを確認
+
+---
+
+#### PR#20: Advanced Generator (CTGAN Integration)
+
+**目的**: ベースライン（統計）を超えた、相関関係を学習できる高精度な合成データを生成する。
+
+**成果物（案）**
+
+- `sfdao/generator/ctgan.py` （SDV/CTGAN ラッパー）
+- `pyproject.toml` に `[extras]` 定義（`pip install sfdao[deep]`）
+- 設定で `generator.type: ctgan` を選択可能に
+
+**受け入れ条件（DoD）**
+
+- `sfdao generate --config ctgan.yaml` で学習ベース合成が動作
+- `extras` なしのデフォルトインストールでは CTGAN が無効化される（import error が出ない）
+
+**タスク**
+
+- [ ] `sdv` または `ydata-synthetic` の選定と依存追加
+- [ ] `CTGANGenerator` クラス実装（`fit`/`sample` インターフェース）
+- [ ] Generator Factory に CTGAN を登録
+- [ ] CI で `extras` 無しテストがパスすることを確認（optional dependency）
+- [ ] E2E テスト（CTGANで生成→監査）を追加（CI では skip 可）
+
+Tests: `tests/unit/generator/test_ctgan.py`, `tests/e2e/test_ctgan_smoke.py`
+
+---
+
+#### PR#21: Machine Learning Utility Evaluation
+
+**目的**: 「合成データで学習したモデルが、実データで学習したモデルと同等の性能を出せるか」を定量評価する。
+
+**成果物（案）**
+
+- `sfdao/evaluator/ml_utility.py`（TSTR 評価）
+- レポートに ML Utility セクション追加
+
+**受け入れ条件（DoD）**
+
+- `--ml-utility` オプションで AUC/F1 がレポートに出力される
+- デフォルトは OFF（計算コストのため）
+
+**タスク**
+
+- [ ] TSTR ロジックの実装（LogisticRegression or RandomForest）
+- [ ] ターゲット列の指定方法を設計（設定ファイル or 自動推定）
+- [ ] レポートテンプレートに ML Utility セクション追加
+- [ ] CLI に `--ml-utility` フラグ追加
+
+Tests: `tests/unit/evaluator/test_ml_utility.py`, `tests/e2e/test_ml_utility_smoke.py`
+
+---
+
+#### PR#22: PyPI Publication & Final Polish
+
+**目的**: ライブラリとして一般公開できる状態にする。
+
+**成果物（案）**
+
+- `pyproject.toml` のメタデータ完備
+- `README.md` のバッジ（PyPI, CI, Coverage）
+- `CHANGELOG.md` の作成
+- バージョン `0.1.0` タグ
+
+**受け入れ条件（DoD）**
+
+- `pip install sfdao` で PyPI からインストール可能
+- README の Quick Start が動作する
+
+**タスク**
+
+- [ ] `pyproject.toml` に License, Classifiers, Homepage を追加
+- [ ] `CHANGELOG.md` を作成
+- [ ] README にバッジを追加
+- [ ] TestPyPI でテストリリース
+- [ ] PyPI への正式リリース（`v0.1.0` タグ）
+
+Tests: N/A（リリースワークフローの動作確認）
+
+### Phase 3完了の定義（DoD）
+
+- [ ] CIが高速かつ安定して回る（キャッシュ有効化）
+- [ ] 学習ベースの生成器が選択できる
+- [ ] MLモデルの性能（Utility）が評価レポートに出力できる
+- [ ] PyPIへのデプロイフローが確立されている
 
 ---
 
