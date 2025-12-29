@@ -39,7 +39,7 @@ class BaseReporter(ABC):
             for penalty in composite.penalties
         ]
 
-        return {
+        context = {
             "metrics": dict(evaluation_report.metrics),
             "composite_score": {
                 "total": composite.total,
@@ -48,6 +48,28 @@ class BaseReporter(ABC):
             },
             "metadata": dict(evaluation_report.metadata),
         }
+
+        # Format guard violations if present
+        metadata = context["metadata"]
+        if isinstance(metadata, dict) and "guard_violations" in metadata:
+            violations = metadata["guard_violations"]
+            if isinstance(violations, list) and len(violations) > 0:
+                # Group by rule or summarize
+                unique_rules = sorted(
+                    list(
+                        set(
+                            str(v.get("rule_name"))
+                            for v in violations
+                            if isinstance(v, dict) and v.get("rule_name") is not None
+                        )
+                    )
+                )
+                context["guard_summary"] = {
+                    "total_violations": len(violations),
+                    "unique_rules": unique_rules,
+                }
+
+        return context
 
     def render_to_file(self, evaluation_report: EvaluationReport, path: str | Path) -> Path:
         content = self.generate(evaluation_report)

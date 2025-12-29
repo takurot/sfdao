@@ -32,7 +32,7 @@ class GuardSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     enabled: bool = Field(True, description="Whether constraint/logic guard is enabled.")
-    mode: Literal["detect", "drop", "clip"] = Field(
+    mode: Literal["detect", "exclude", "clip", "correct"] = Field(
         "detect", description="How to handle violations (detect only, drop rows, clip values)."
     )
     params: dict[str, Any] = Field(default_factory=dict, description="Guard-specific parameters.")

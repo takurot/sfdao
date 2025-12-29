@@ -216,7 +216,15 @@ def generate(
         raise typer.BadParameter(str(exc)) from exc
 
     try:
-        generator = build_generator(phase2_config.generator, seed=phase2_config.seed)
+        guard_engine = None
+        if phase2_config.guard:
+            from sfdao.guard.factory import create_guard_engine
+
+            guard_engine = create_guard_engine(phase2_config.guard)
+
+        generator = build_generator(
+            phase2_config.generator, seed=phase2_config.seed, guard=guard_engine
+        )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     generator.fit(real_df)
