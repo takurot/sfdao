@@ -1022,6 +1022,7 @@ Phase 2では「生成＋整合性」を最小スコープで成立させ、`aud
 #### PR#13: 設定スキーマ & 生成インターフェース基盤
 
 **目的**: Phase 2で増える設定（生成/制約/シナリオ/評価）を Pydantic v2 で定義し、CLIで安全に扱えるようにする。
+**進捗**: ✅ 設定スキーマ/ローダー追加・`sfdao generate/run` の config バリデーション追加（PR#13）
 
 **成果物（案）**
 
@@ -1039,10 +1040,10 @@ Phase 2では「生成＋整合性」を最小スコープで成立させ、`aud
 
 **タスク**
 
-- [ ] Phase 2用の設定スキーマを定義（generator/guard/scenario/audit）
-- [ ] `--config` を受け取る共通ローダーを追加（YAML/JSON、Pydantic v2）
-- [ ] Generator の最小インターフェース（`fit`/`sample` もしくは `generate`）を定義
-- [ ] CLIの引数設計（Phase 1の `audit` と整合、help整備）
+- [x] Phase 2用の設定スキーマを定義（generator/guard/scenario/audit）
+- [x] `--config` を受け取る共通ローダーを追加（YAML/JSON、Pydantic v2）
+- [x] Generator の最小インターフェース（`fit`/`sample` もしくは `generate`）を定義
+- [x] CLIの引数設計（Phase 1の `audit` と整合、help整備）
 
 Tests: `tests/unit/config/test_phase2_config.py`, `tests/unit/cli/test_generate_args.py`
 
