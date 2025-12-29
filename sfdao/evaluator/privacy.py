@@ -11,6 +11,9 @@ __all__ = ["PrivacyEvaluator"]
 class PrivacyEvaluator:
     """Evaluate privacy risks between real and synthetic records."""
 
+    def __init__(self, sample_size: int | None = None) -> None:
+        self.sample_size = sample_size
+
     def distance_to_closest_record(
         self,
         real: Iterable[Iterable[float]] | NDArray[np.float64],
@@ -58,6 +61,11 @@ class PrivacyEvaluator:
         if np.isnan(array).any():
             row_mask = ~np.isnan(array).any(axis=1)
             array = array[row_mask]
+
+        if self.sample_size is not None and len(array) > self.sample_size:
+            indices = np.random.choice(len(array), self.sample_size, replace=False)
+            array = array[indices]
+
         return array.astype(np.float64, copy=False)
 
     def _ensure_non_empty(self, real: NDArray[np.float64], synthetic: NDArray[np.float64]) -> None:

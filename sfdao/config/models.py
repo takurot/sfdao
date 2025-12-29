@@ -47,12 +47,26 @@ class ScenarioSettings(BaseModel):
     )
 
 
+class PrivacySettings(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    sample_size: int | None = Field(
+        default=None,
+        ge=1,
+        description="Sample size for expensive privacy metric calculations.",
+    )
+
+
 class AuditSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     weights: dict[str, float] | None = Field(
         default=None,
         description="Optional component weights override (e.g., quality/utility/privacy).",
+    )
+    privacy: PrivacySettings | None = Field(
+        default=None,
+        description="Privacy evaluation settings.",
     )
 
 

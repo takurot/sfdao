@@ -350,6 +350,7 @@ def run(
     report_path = out_dir / "report.html"
 
     weights = phase2_config.audit.weights if phase2_config.audit else None
+    privacy_settings = phase2_config.audit.privacy if phase2_config.audit else None
 
     run_audit(
         real_path=real_path,
@@ -358,6 +359,7 @@ def run(
         quiet=quiet,
         console=console,
         weights=weights,
+        privacy_settings=privacy_settings,
     )
 
 
