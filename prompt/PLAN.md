@@ -1052,6 +1052,7 @@ Tests: `tests/unit/config/test_phase2_config.py`, `tests/unit/cli/test_generate_
 #### PR#14: Baseline Generator（最小の生成器）
 
 **目的**: 依存が少ない方式で「実データ → 合成CSV出力」を成立させる（まずは数値列中心、seed固定）。
+**進捗**: ✅ BaselineGenerator 実装・`sfdao generate` でCSV出力・単体/E2Eテスト追加（PR#14）
 
 **成果物（案）**
 
@@ -1066,10 +1067,10 @@ Tests: `tests/unit/config/test_phase2_config.py`, `tests/unit/cli/test_generate_
 
 **タスク**
 
-- [ ] Phase 1 の `generate_test_synthetic_data` を Phase 2 generator に移植/再利用する方針を決める
-- [ ] 数値列は統計サンプリング（平均/分散）ベースで生成（Phase 2の第一歩）
-- [ ] ラベル/カテゴリ列は分布を保持してサンプリング（最小）
-- [ ] 生成物を `CSVLoader` で再読込して、型が破綻しないことを確認する
+- [x] Phase 1 の `generate_test_synthetic_data` は既存用途として維持し、Phase 2 は `BaselineGenerator` を新規実装（方針決定）
+- [x] 数値列は統計サンプリング（平均/分散）ベースで生成（Phase 2の第一歩）
+- [x] ラベル/カテゴリ列は分布を保持してサンプリング（最小）
+- [x] 生成物を `CSVLoader` で再読込して、型が破綻しないことを確認する
 
 Tests: `tests/unit/generator/test_baseline_generator.py`, `tests/e2e/test_generate_smoke.py`
 
