@@ -26,6 +26,9 @@ from sfdao.reporter.pdf import PDFReporter
 __all__ = ["run_audit"]
 
 
+from sfdao.config.models import PrivacySettings
+
+
 def run_audit(
     real_path: Path,
     synthetic_path: Path,
@@ -33,6 +36,7 @@ def run_audit(
     quiet: bool,
     console: Console,
     weights: Optional[dict[str, float]] = None,
+    privacy_settings: Optional[PrivacySettings] = None,
 ) -> None:
     """Run audit evaluation and generate report.
 
@@ -43,6 +47,7 @@ def run_audit(
         quiet: If True, suppress console output.
         console: Rich console for output.
         weights: Optional dictionary of component weights.
+        privacy_settings: Optional privacy evaluation settings.
     """
     if not quiet:
         console.print("[bold blue]SFDAO Audit[/bold blue] - Starting evaluation...")
@@ -101,7 +106,7 @@ def run_audit(
         metrics["utility"] = 0.5
 
     privacy_score, privacy_risk, privacy_dcr_median = _compute_privacy_scores(
-        real_df, synthetic_df, shared_numeric
+        real_df, synthetic_df, shared_numeric, privacy_settings
     )
     metrics["privacy"] = privacy_score
 
@@ -117,18 +122,22 @@ def run_audit(
     financial_facts = _compute_financial_facts(real_df, synthetic_df, shared_numeric)
 
     # Create evaluation report
+    metadata = {
+        "real_file": str(real_path),
+        "synthetic_file": str(synthetic_path),
+        "real_rows": len(real_df),
+        "synthetic_rows": len(synthetic_df),
+        "privacy_risk": privacy_risk,
+        "privacy_dcr_median": privacy_dcr_median,
+        "financial_facts": financial_facts,
+    }
+    if privacy_settings and privacy_settings.sample_size:
+        metadata["privacy_sample_size"] = privacy_settings.sample_size
+
     report = EvaluationReport(
         metrics=metrics,
         composite_score=composite_score,
-        metadata={
-            "real_file": str(real_path),
-            "synthetic_file": str(synthetic_path),
-            "real_rows": len(real_df),
-            "synthetic_rows": len(synthetic_df),
-            "privacy_risk": privacy_risk,
-            "privacy_dcr_median": privacy_dcr_median,
-            "financial_facts": financial_facts,
-        },
+        metadata=metadata,
     )
 
     reporter = _select_reporter(output_path)
@@ -159,6 +168,7 @@ def _compute_privacy_scores(
     real_df: pd.DataFrame,
     synthetic_df: pd.DataFrame,
     shared_numeric: list[str],
+    privacy_settings: Optional[PrivacySettings] = None,
 ) -> tuple[float, float | None, float | None]:
     if not shared_numeric:
         return 0.5, None, None
@@ -169,7 +179,8 @@ def _compute_privacy_scores(
     if real_numeric.empty or synthetic_numeric.empty:
         return 0.5, None, None
 
-    evaluator = PrivacyEvaluator()
+    sample_size = privacy_settings.sample_size if privacy_settings else None
+    evaluator = PrivacyEvaluator(sample_size=sample_size)
     real_matrix = real_numeric.to_numpy(dtype=float)
     synthetic_matrix = synthetic_numeric.to_numpy(dtype=float)
 

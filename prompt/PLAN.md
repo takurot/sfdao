@@ -1152,6 +1152,7 @@ Tests: `tests/e2e/test_run_pipeline_smoke.py`
 #### PR#18: ベンチマーク & スケール対策（privacy中心）
 
 **目的**: 大規模データに対しても現実的な時間で回るように「計測」と「フォールバック」を整備する。
+**進捗**: ✅ Benchmark Script 実装・PrivacySampling 実装・ドキュメント（BENCHMARK.md）作成完了（PR#18）
 
 **成果物（案）**
 
