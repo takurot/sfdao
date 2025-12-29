@@ -18,6 +18,7 @@ from sfdao.config.loader import load_phase2_config
 from sfdao.config.models import Phase2Config
 from sfdao.generator.factory import build_generator
 from sfdao.ingestion.loader import CSVLoader
+from sfdao.scenario.loader import load_scenario_engine
 
 __all__ = ["app"]
 
@@ -237,6 +238,14 @@ def generate(
 
 @app.command()
 def run(
+    real: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--real",
+            "-r",
+            help="Path to the real data CSV file.",
+        ),
+    ] = None,
     config: Annotated[
         Optional[Path],
         typer.Option(
@@ -245,6 +254,14 @@ def run(
             help="Path to Phase 2 YAML/JSON config file.",
         ),
     ] = None,
+    out_dir: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--out-dir",
+            "-o",
+            help="Directory to save outputs (synthetic.csv, report.html).",
+        ),
+    ] = Path("output"),
     validate_only: Annotated[
         bool,
         typer.Option(
@@ -252,19 +269,96 @@ def run(
             help="Validate the config file and exit without running the pipeline.",
         ),
     ] = False,
+    quiet: Annotated[
+        bool,
+        typer.Option(
+            "--quiet",
+            "-q",
+            help="Suppress console output.",
+        ),
+    ] = False,
 ) -> None:
     """Run generate → guard → audit pipeline (Phase 2).
 
-    Phase 2 implementation is incremental. In PR#13 this command supports config validation.
+    Executes the full pipeline:
+    1. Generator: Fit to real data and sample (with Guard/Scenario if configured)
+    2. Audit: Evaluate synthetic data against real data
+    3. Report: Generate evaluation report
     """
     config_path = validate_file_exists(config, "config")
-    _load_phase2_config_or_exit(config_path)
+    phase2_config = _load_phase2_config_or_exit(config_path)
 
     if validate_only:
         console.print("[green]✓[/green] Config is valid.")
         return
 
-    raise typer.BadParameter("Pipeline is not implemented yet. Use --validate-only for now.")
+    real_path = validate_file_exists(real, "real")
+
+    # 0. Setup output directory
+    if out_dir is None:
+        out_dir = Path("output")
+
+    if not out_dir.exists():
+        out_dir.mkdir(parents=True, exist_ok=True)
+    elif not out_dir.is_dir():
+        raise typer.BadParameter(f"'{out_dir}' is not a directory.")
+
+    # 1. Load Real Data
+    try:
+        real_df = CSVLoader().load(real_path)
+    except Exception as e:
+        raise typer.BadParameter(f"Failed to load real data: {e}")
+
+    # 2. Build Components
+    guard_engine = None
+    if phase2_config.guard:
+        from sfdao.guard.factory import create_guard_engine
+
+        guard_engine = create_guard_engine(phase2_config.guard)
+
+    scenario_engine = None
+    if phase2_config.scenario:
+        scenario_engine = load_scenario_engine(phase2_config.scenario, seed=phase2_config.seed)
+
+    try:
+        generator = build_generator(
+            phase2_config.generator,
+            seed=phase2_config.seed,
+            guard=guard_engine,
+            scenario=scenario_engine,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    # 3. Generate
+    if not quiet:
+        console.print("[bold blue]Generating synthetic data...[/bold blue]")
+
+    generator.fit(real_df)
+    synthetic_df = generator.sample(phase2_config.generator.n_samples)
+
+    synthetic_path = out_dir / "synthetic.csv"
+    synthetic_df.to_csv(synthetic_path, index=False)
+
+    if not quiet:
+        console.print(f"[green]✓[/green] Synthetic data saved to: {synthetic_path}")
+
+    # 4. Audit
+    if not quiet:
+        console.print("[bold blue]Running audit...[/bold blue]")
+
+    report_path = out_dir / "report.html"
+
+    weights = phase2_config.audit.weights if phase2_config.audit else None
+
+    run_audit(
+        real_path=real_path,
+        synthetic_path=synthetic_path,
+        output_path=report_path,
+        quiet=quiet,
+        console=console,
+        weights=weights,
+    )
 
 
 if __name__ == "__main__":

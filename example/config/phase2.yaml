@@ -3,18 +3,26 @@ seed: 42
 
 generator:
   type: baseline
-  n_samples: 1000
+  n_samples: 200
 
 guard:
-  enabled: false
+  enabled: true
   mode: detect
+  params:
+     # Examples of guard params (not yet fully implemented but placeholder)
+     check_nulls: true
 
 scenario:
   enabled: false
+  # Example if enabled:
+  # params:
+  #   transformations:
+  #     - type: scale
+  #       column: amount
+  #       factor: 1.5
 
 audit:
   weights:
     quality: 0.4
     utility: 0.3
     privacy: 0.3
-

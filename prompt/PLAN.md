@@ -1127,7 +1127,7 @@ Tests: `tests/unit/scenario/test_injection.py`
 #### PR#17: `generate → guard → audit` のワークフロー統合（`sfdao run`）
 
 **目的**: Phase 2 の最小E2E（生成→制約→監査→レポート）を CLI でワンショット実行できるようにする。
-
+**進捗**: ✅ `sfdao run` 実装・E2Eテスト追加・Exampleプロジェクト更新完了（PR#17）
 **成果物（案）**
 
 - `sfdao run` コマンド（or `sfdao generate` + `sfdao audit` の一括モード）
@@ -1141,9 +1141,9 @@ Tests: `tests/unit/scenario/test_injection.py`
 
 **タスク**
 
-- [ ] `run` の入出力（outdir/命名/上書き方針）を決める
-- [ ] `example/README.md` を Phase 2 手順に追随させる
-- [ ] E2E テスト（小規模データ）を追加
+- [x] `run` の入出力（outdir/命名/上書き方針）を決める
+- [x] `example/README.md` を Phase 2 手順に追随させる
+- [x] E2E テスト（小規模データ）を追加
 
 Tests: `tests/e2e/test_run_pipeline_smoke.py`
 

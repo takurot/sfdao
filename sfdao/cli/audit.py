@@ -32,6 +32,7 @@ def run_audit(
     output_path: Optional[Path],
     quiet: bool,
     console: Console,
+    weights: Optional[dict[str, float]] = None,
 ) -> None:
     """Run audit evaluation and generate report.
 
@@ -41,6 +42,7 @@ def run_audit(
         output_path: Optional path to save the report.
         quiet: If True, suppress console output.
         console: Rich console for output.
+        weights: Optional dictionary of component weights.
     """
     if not quiet:
         console.print("[bold blue]SFDAO Audit[/bold blue] - Starting evaluation...")
@@ -107,7 +109,8 @@ def run_audit(
         console.print("  Calculating composite score...")
 
     # Calculate composite score
-    weights = {"quality": 0.4, "utility": 0.3, "privacy": 0.3}
+    if weights is None:
+        weights = {"quality": 0.4, "utility": 0.3, "privacy": 0.3}
     scorer = CompositeScorer(weights)
     composite_score = scorer.calculate(metrics)
 
