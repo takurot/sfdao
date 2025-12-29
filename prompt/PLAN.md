@@ -1195,6 +1195,7 @@ Tests: `tests/e2e/test_benchmark_smoke.py`（最小。重い計測はCI外）
 #### PR#19: CI/CD Hardening & Optimization
 
 **目的**: 開発サイクルを加速し、品質保証を強化する。
+**進捗**: ✅ CI最適化(Cache/Matrix)・Release Workflow作成・Docs更新完了（PR#19）
 
 **成果物（案）**
 
