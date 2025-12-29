@@ -210,8 +210,15 @@ def generate(
     real_path = validate_file_exists(real, "real")
     output_path = validate_output_path(output, "output")
 
-    real_df = CSVLoader().load(real_path)
-    generator = build_generator(phase2_config.generator, seed=phase2_config.seed)
+    try:
+        real_df = CSVLoader().load(real_path)
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    try:
+        generator = build_generator(phase2_config.generator, seed=phase2_config.seed)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     generator.fit(real_df)
     synthetic_df = generator.sample(phase2_config.generator.n_samples)
     synthetic_df.to_csv(output_path, index=False)
