@@ -27,7 +27,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     sizes = [int(s) for s in args.sizes.split(",")]
-    console.print(f"[bold blue]Starting Benchmark[/bold blue]")
+    console.print("[bold blue]Starting Benchmark[/bold blue]")
     console.print(f"Sizes: {sizes}")
     console.print(f"Privacy Sample Size: {args.privacy_sample_size}")
 
@@ -52,14 +52,16 @@ def main() -> None:
             real_df = real_df_full.sample(n=size, random_state=42)
         else:
             console.print(
-                f"[yellow]Warning: Requested size {size} > real data size {len(real_df_full)}. Using full data.[/yellow]"
+                f"[yellow]Warning: Requested size {size} > "
+                f"real data size {len(real_df_full)}. Using full data.[/yellow]"
             )
             real_df = real_df_full.copy()
-            # If we can't reach the size for real data, we still generate 'size' rows for synthetic?
-            # Usually strict benchmark implies real=size, synthetic=size.
-            # But if real is small, we can override size to match real for fairness, OR upscale synthetic.
+            # If we can't reach the size for real data, we still generate 'size'
+            # rows for synthetic? Usually strict benchmark implies real=size.
+            # But if real is small, we can override size to match real for
+            # fairness, OR upscale synthetic.
             # Let's upscale synthetic to requested size, but keep real as max available.
-            
+
         current_real_path = output_dir / f"real_subset_{size}.csv"
         real_df.to_csv(current_real_path, index=False)
 
@@ -76,11 +78,13 @@ def main() -> None:
         # Generate requested size
         synthetic_df = generator.sample(size)
         sample_time = time.time() - sample_start
-        
+
         synthetic_df.to_csv(synthetic_path, index=False)
         total_gen_time = fit_time + sample_time
 
-        console.print(f"Gen Time:    {total_gen_time:.4f}s (Fit: {fit_time:.2f}s, Sample: {sample_time:.2f}s)")
+        console.print(
+            f"Gen Time:    {total_gen_time:.4f}s (Fit: {fit_time:.2f}s, Sample: {sample_time:.2f}s)"
+        )
 
         # 3. Audit
         privacy_settings = None
@@ -120,7 +124,7 @@ def main() -> None:
 
     for res in results:
         table.add_row(res["Size"], res["Gen (s)"], res["Audit (s)"])
-    
+
     console.print(table)
     console.print(f"\nOutputs saved to: {output_dir}")
 

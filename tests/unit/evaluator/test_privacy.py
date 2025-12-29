@@ -117,4 +117,3 @@ class TestPrivacySampling:
         dcr2 = evaluator.distance_to_closest_record(real.copy(), synthetic.copy())
 
         np.testing.assert_array_equal(dcr1, dcr2)
-
