@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 
 from sfdao.generator.base import BaseGenerator
 from sfdao.ingestion.type_detector import ColumnType, TypeDetector
+from sfdao.guard.engine import GuardEngine
 
 __all__ = ["BaselineGenerator"]
 
@@ -47,10 +48,11 @@ class BaselineGenerator(BaseGenerator):
     - Missing values: reproduce per-column missing rate.
     """
 
-    def __init__(self, *, seed: int | None = None) -> None:
+    def __init__(self, *, seed: int | None = None, guard: GuardEngine | None = None) -> None:
         super().__init__(seed=seed)
         self._column_order: list[str] = []
         self._models: dict[str, _ColumnModel] = {}
+        self.guard = guard
 
     def fit(self, real: pd.DataFrame) -> None:
         if real.empty:
@@ -76,7 +78,12 @@ class BaselineGenerator(BaseGenerator):
             model = self._models[column]
             data[column] = self._sample_column(model, rng, n_samples)
 
-        return pd.DataFrame(data, columns=self._column_order)
+        df = pd.DataFrame(data, columns=self._column_order)
+
+        if self.guard:
+            df, _ = self.guard.apply(df)
+
+        return df
 
     def _build_column_model(
         self, series: pd.Series, column: str, detector: TypeDetector
