@@ -1015,11 +1015,169 @@ Phase 2では「生成＋整合性」を最小スコープで成立させ、`aud
    - `PrivacyEvaluator` の計算量対策（サンプリング/近似最近傍/バッチ化等）を設計し、設定で制御できるようにする
    - 大規模入力時の警告/フォールバック方針（例: privacyはサンプルで計算）をドキュメント化
 
+### Phase 2 PR計画（詳細）
+
+以下は「Phase 2 を最小スコープで成立させる」ための PR 分割案です（PR番号は計画上の通し番号）。
+
+#### PR#13: 設定スキーマ & 生成インターフェース基盤
+
+**目的**: Phase 2で増える設定（生成/制約/シナリオ/評価）を Pydantic v2 で定義し、CLIで安全に扱えるようにする。
+
+**成果物（案）**
+
+- 設定モデル（例: `sfdao/config/models.py`）
+- 設定ロード/バリデーション（例: `sfdao/config/loader.py`）
+- Generatorインターフェース（例: `sfdao/generator/base.py`）
+- CLIの骨組み（例: `sfdao generate --config ...`, `sfdao run --config ...` の help/バリデーション）
+- サンプル設定（例: `example/config/phase2.yaml`）
+
+**受け入れ条件（DoD）**
+
+- 設定ファイルが strict にバリデーションされ、無効な入力で非0終了する
+- seed を含む設定が CLI から渡せる（再現性の前提を作る）
+- 単体テストで「設定の正常系/異常系」をカバーする
+
+**タスク**
+
+- [ ] Phase 2用の設定スキーマを定義（generator/guard/scenario/audit）
+- [ ] `--config` を受け取る共通ローダーを追加（YAML/JSON、Pydantic v2）
+- [ ] Generator の最小インターフェース（`fit`/`sample` もしくは `generate`）を定義
+- [ ] CLIの引数設計（Phase 1の `audit` と整合、help整備）
+
+Tests: `tests/unit/config/test_phase2_config.py`, `tests/unit/cli/test_generate_args.py`
+
+---
+
+#### PR#14: Baseline Generator（最小の生成器）
+
+**目的**: 依存が少ない方式で「実データ → 合成CSV出力」を成立させる（まずは数値列中心、seed固定）。
+
+**成果物（案）**
+
+- Baseline generator 実装（例: `sfdao/generator/baseline.py`）
+- 生成結果のスキーマ整合（列順/列名/型/欠損ポリシー）
+- `sfdao generate` で CSV を出力できる
+
+**受け入れ条件（DoD）**
+
+- 同一入力 + 同一設定（seed含む）で同一出力が得られる
+- 最低限の欠損/定数列などに対してクラッシュしない
+
+**タスク**
+
+- [ ] Phase 1 の `generate_test_synthetic_data` を Phase 2 generator に移植/再利用する方針を決める
+- [ ] 数値列は統計サンプリング（平均/分散）ベースで生成（Phase 2の第一歩）
+- [ ] ラベル/カテゴリ列は分布を保持してサンプリング（最小）
+- [ ] 生成物を `CSVLoader` で再読込して、型が破綻しないことを確認する
+
+Tests: `tests/unit/generator/test_baseline_generator.py`, `tests/e2e/test_generate_smoke.py`
+
+---
+
+#### PR#15: Constraint & Logic Guard（検出/除外/補正）
+
+**目的**: 「統計的にはそれっぽいがビジネスとしてあり得ない」データを、ルールで検出・制御できるようにする。
+
+**成果物（案）**
+
+- ルール定義と適用エンジン（例: `sfdao/guard/`）
+- 方針（検出のみ / 除外 / クリップ / 補正）の切り替え（設定で制御）
+- 違反サマリーを `audit` レポート metadata に載せる
+
+**受け入れ条件（DoD）**
+
+- ルールが設定でON/OFFできる
+- 違反件数・割合がレポートに出る（監査視点の説明性）
+
+**タスク**
+
+- [ ] 最小のルールセットを決める（例: 値域、欠損率、非負制約、単調増加timestamp、IDユニーク等）
+- [ ] ルールの実装と適用順序を定義
+- [ ] 違反の記録フォーマット（metadata用）を定義
+
+Tests: `tests/unit/guard/test_rules.py`, `tests/integration/test_guard_with_generate.py`
+
+---
+
+#### PR#16: Scenario Injection（手動シナリオ）
+
+**目的**: 生成データに対して「外れ値増加」「期間ショック」「カテゴリ比率変更」などを設定ファイルで適用できるようにする。
+
+**成果物（案）**
+
+- シナリオ定義（YAML）と変換パイプライン（例: `sfdao/scenario/`）
+- 変換ログ（何をどれだけ変えたか）を metadata に残す
+
+**受け入れ条件（DoD）**
+
+- シナリオが seed 固定で再現可能
+- 変換の適用結果が監査レポートから追える（監査証跡）
+
+**タスク**
+
+- [ ] 最小の変換セットを決める（scale/shift/clip/outlier/rate-change 等）
+- [ ] 数値/カテゴリ別に適用可能な変換を実装
+- [ ] 変換ログを metadata に統一フォーマットで格納
+
+Tests: `tests/unit/scenario/test_injection.py`
+
+---
+
+#### PR#17: `generate → guard → audit` のワークフロー統合（`sfdao run`）
+
+**目的**: Phase 2 の最小E2E（生成→制約→監査→レポート）を CLI でワンショット実行できるようにする。
+
+**成果物（案）**
+
+- `sfdao run` コマンド（or `sfdao generate` + `sfdao audit` の一括モード）
+- `example/` を Phase 2 フローに対応（設定ファイル込み）
+- CIで動く最小E2E（小規模データ）
+
+**受け入れ条件（DoD）**
+
+- `poetry install` 後に `example/` の手順で「生成→監査→レポート」が再現できる
+- CIで `run` スモークがパスする
+
+**タスク**
+
+- [ ] `run` の入出力（outdir/命名/上書き方針）を決める
+- [ ] `example/README.md` を Phase 2 手順に追随させる
+- [ ] E2E テスト（小規模データ）を追加
+
+Tests: `tests/e2e/test_run_pipeline_smoke.py`
+
+---
+
+#### PR#18: ベンチマーク & スケール対策（privacy中心）
+
+**目的**: 大規模データに対しても現実的な時間で回るように「計測」と「フォールバック」を整備する。
+
+**成果物（案）**
+
+- ベンチマークスクリプト（例: `sfdao/scripts/benchmark_audit.py` or `tools/benchmark.py`）
+- サイズ別（1k/10k/100k）計測手順のドキュメント（`docs/` or `DATA_SETUP.md`）
+- PrivacyEvaluator の計算量対策（サンプリング/近似最近傍）を設定で制御
+
+**受け入れ条件（DoD）**
+
+- ベンチ実行手順がドキュメント化され、CIを壊さずにローカルで再現できる
+- 大規模入力時に privacy をフル計算できない場合、明示的に警告し、設定に従ってフォールバックする
+
+**タスク**
+
+- [ ] ベンチ実行のI/F（入力/サイズ/回数/出力形式）を決める
+- [ ] `audit` の性能ボトルネックを可視化する（最低限、time/memory）
+- [ ] privacy サンプルサイズ等の設定項目を追加し、レポートに反映する
+
+Tests: `tests/e2e/test_benchmark_smoke.py`（最小。重い計測はCI外）
+
 ### Phase 2完了の定義（DoD）
 
-- 生成（CSV出力）→ 制約適用（必要なら）→ 監査（レポート出力）が一連で実行できる
-- seed固定で再現性が担保される（同一入力/設定で同一出力）
-- `example/` の手順が最新実装と一致している
+- [ ] 生成（CSV出力）→ 制約適用（必要なら）→ 監査（レポート出力）が一連で実行できる
+- [ ] seed固定で再現性が担保される（同一入力/設定で同一出力）
+- [ ] `example/` の手順が最新実装と一致している（設定ファイル含む）
+- [ ] CIで Phase 2 の最小E2E（小規模）がスモーク実行できる
+- [ ] ベンチマーク手順が整備され、サイズ別の目安（time/memory）が取得できる
 
 ---
 
