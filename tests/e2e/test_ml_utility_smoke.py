@@ -138,21 +138,21 @@ class TestMLUtilitySmokeTest:
         )
 
         assert result.returncode != 0
-        
+
         # Combine stdout and stderr
         combined_output = result.stderr + result.stdout
-        
+
         # Remove RuntimeWarnings which might clutter CI output
         combined_output = "\n".join(
-            line for line in combined_output.splitlines() 
-            if "RuntimeWarning" not in line
+            line for line in combined_output.splitlines() if "RuntimeWarning" not in line
         )
-        
+
         # Strip ANSI codes to handle Rich formatting
         import re
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        plain_output = ansi_escape.sub('', combined_output)
-        
+
+        ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+        plain_output = ansi_escape.sub("", combined_output)
+
         # Check for key parts of the error message
         assert "ml-target" in plain_output
         assert "required" in plain_output
