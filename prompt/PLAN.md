@@ -1223,6 +1223,7 @@ Tests: 既存テストが全てパスすることを確認
 #### PR#20: Advanced Generator (CTGAN Integration)
 
 **目的**: ベースライン（統計）を超えた、相関関係を学習できる高精度な合成データを生成する。
+**進捗**: ✅ CTGANGenerator 実装・pyproject.toml更新・単体/E2Eテスト追加（PR#20）
 
 **成果物（案）**
 
@@ -1237,13 +1238,13 @@ Tests: 既存テストが全てパスすることを確認
 
 **タスク**
 
-- [ ] `sdv` または `ydata-synthetic` の選定と依存追加
-- [ ] `CTGANGenerator` クラス実装（`fit`/`sample` インターフェース）
-- [ ] Generator Factory に CTGAN を登録
-- [ ] CI で `extras` 無しテストがパスすることを確認（optional dependency）
-- [ ] E2E テスト（CTGANで生成→監査）を追加（CI では skip 可）
+- [x] `sdv` または `ydata-synthetic` の選定と依存追加
+- [x] `CTGANGenerator` クラス実装（`fit`/`sample` インターフェース）
+- [x] Generator Factory に CTGAN を登録
+- [x] CI で `extras` 無しテストがパスすることを確認（optional dependency）
+- [x] E2E テスト（CTGANで生成→監査）を追加（CI では skip 可）
 
-Tests: `tests/unit/generator/test_ctgan.py`, `tests/e2e/test_ctgan_smoke.py`
+Tests: `tests/unit/generator/test_ctgan.py`, `tests/unit/generator/test_factory.py`, `tests/e2e/test_ctgan_smoke.py`
 
 ---
 
