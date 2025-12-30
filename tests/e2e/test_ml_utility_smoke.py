@@ -138,9 +138,24 @@ class TestMLUtilitySmokeTest:
         )
 
         assert result.returncode != 0
-        # Error message could be in stderr or stdout
+        
+        # Combine stdout and stderr
         combined_output = result.stderr + result.stdout
-        assert "--ml-target is required" in combined_output
+        
+        # Remove RuntimeWarnings which might clutter CI output
+        combined_output = "\n".join(
+            line for line in combined_output.splitlines() 
+            if "RuntimeWarning" not in line
+        )
+        
+        # Strip ANSI codes to handle Rich formatting
+        import re
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        plain_output = ansi_escape.sub('', combined_output)
+        
+        # Check for key parts of the error message
+        assert "ml-target" in plain_output
+        assert "required" in plain_output
 
     def test_audit_without_ml_utility(
         self, sample_data_with_target: tuple[Path, Path], tmp_path: Path
