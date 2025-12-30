@@ -2,8 +2,11 @@
 
 **金融コンプライアンス準拠・合成データ品質保証プラットフォーム**
 
-[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![PyPI version](https://badge.fury.io/py/sfdao.svg)](https://badge.fury.io/py/sfdao)
+[![Python Version](https://img.shields.io/pypi/pyversions/sfdao.svg)](https://pypi.org/project/sfdao/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Tests](https://github.com/takurot/sfdao/actions/workflows/ci.yml/badge.svg)](https://github.com/takurot/sfdao/actions)
+[![Codecov](https://codecov.io/gh/takurot/sfdao/branch/main/graph/badge.svg)](https://codecov.io/gh/takurot/sfdao)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ## Overview
@@ -161,9 +164,9 @@ sfdao/
 
 ### Phase 2: "The Generator & Logic"
 
-- Hybrid Generator実装（CTGAN, Copula, LLM）
-- Constraint & Logic Guard（会計恒等式チェック）
-- Scenario Injection（ストレステスト）
+- [x] Hybrid Generator実装（CTGAN, Copula, LLM）
+- [x] Constraint & Logic Guard（会計恒等式チェック）
+- [x] Scenario Injection（ストレステスト）
 
 ### Phase 3: "The Optimizer"
 
