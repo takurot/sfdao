@@ -1251,6 +1251,7 @@ Tests: `tests/unit/generator/test_ctgan.py`, `tests/unit/generator/test_factory.
 #### PR#21: Machine Learning Utility Evaluation
 
 **目的**: 「合成データで学習したモデルが、実データで学習したモデルと同等の性能を出せるか」を定量評価する。
+**進捗**: ✅ TSTR評価ロジック（RandomForest/LogisticRegression）実装・CLI統合・レポートテンプレート更新完了（PR#21）
 
 **成果物（案）**
 
@@ -1264,10 +1265,10 @@ Tests: `tests/unit/generator/test_ctgan.py`, `tests/unit/generator/test_factory.
 
 **タスク**
 
-- [ ] TSTR ロジックの実装（LogisticRegression or RandomForest）
-- [ ] ターゲット列の指定方法を設計（設定ファイル or 自動推定）
-- [ ] レポートテンプレートに ML Utility セクション追加
-- [ ] CLI に `--ml-utility` フラグ追加
+- [x] TSTR ロジックの実装（LogisticRegression or RandomForest）
+- [x] ターゲット列の指定方法を設計（`--ml-target` CLIオプション）
+- [x] レポートテンプレートに ML Utility セクション追加
+- [x] CLI に `--ml-utility` フラグ追加
 
 Tests: `tests/unit/evaluator/test_ml_utility.py`, `tests/e2e/test_ml_utility_smoke.py`
 

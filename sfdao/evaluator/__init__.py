@@ -3,6 +3,7 @@ from .financial_facts import (
     FinancialFactsChecker,
     VolatilityClusteringResult,
 )
+from .ml_utility import MLUtilityEvaluator, MLUtilityResult
 from .privacy import PrivacyEvaluator
 from .scoring import (
     CompositeScore,
@@ -18,6 +19,8 @@ __all__ = [
     "FinancialFactsChecker",
     "VolatilityClusteringResult",
     "KSTestResult",
+    "MLUtilityEvaluator",
+    "MLUtilityResult",
     "PrivacyEvaluator",
     "CompositeScore",
     "CompositeScorer",
