@@ -116,6 +116,20 @@ def audit(
             "If not specified, output is printed to console.",
         ),
     ] = None,
+    ml_utility: Annotated[
+        bool,
+        typer.Option(
+            "--ml-utility",
+            help="Enable ML utility evaluation (TSTR). Disabled by default due to compute cost.",
+        ),
+    ] = False,
+    ml_target: Annotated[
+        Optional[str],
+        typer.Option(
+            "--ml-target",
+            help="Target column for ML utility evaluation (required if --ml-utility is set).",
+        ),
+    ] = None,
     quiet: Annotated[
         bool,
         typer.Option(
@@ -134,6 +148,7 @@ def audit(
     - Financial stylized facts evaluation
     - Privacy risk assessment
     - Composite quality score
+    - ML utility evaluation (optional, with --ml-utility)
 
     Examples:
         # Basic audit with console output
@@ -141,10 +156,18 @@ def audit(
 
         # Audit with report file output
         sfdao audit --real data/real.csv --synthetic data/synthetic.csv --output report.txt
+
+        # Audit with ML utility evaluation
+        sfdao audit --real data/real.csv --synthetic data/synthetic.csv \\
+            --ml-utility --ml-target Class
     """
     # Validate required arguments
     real_path = validate_file_exists(real, "real")
     synthetic_path = validate_file_exists(synthetic, "synthetic")
+
+    # Validate ml_target is provided when ml_utility is enabled
+    if ml_utility and not ml_target:
+        raise typer.BadParameter("--ml-target is required when --ml-utility is enabled.")
 
     run_audit(
         real_path=real_path,
@@ -152,6 +175,8 @@ def audit(
         output_path=output,
         quiet=quiet,
         console=console,
+        ml_utility=ml_utility,
+        ml_target=ml_target,
     )
 
 

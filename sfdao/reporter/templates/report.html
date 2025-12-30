@@ -101,6 +101,57 @@
     </section>
     {% endif %}
 
+    {% if metadata.ml_utility %}
+    <section>
+      <h2>ML Utility (TSTR)</h2>
+      <p>Measures if models trained on synthetic data perform comparably to models trained on real data.</p>
+      <div class="metric-grid">
+        <div class="metric-card">
+          <strong>TSTR AUC</strong>
+          <div>{{ metadata.ml_utility.tstr_auc | round(3) }}</div>
+        </div>
+        <div class="metric-card">
+          <strong>TRTR AUC (baseline)</strong>
+          <div>{{ metadata.ml_utility.trtr_auc | round(3) }}</div>
+        </div>
+        <div class="metric-card">
+          <strong>Utility Ratio</strong>
+          <div>{{ metadata.ml_utility.utility_ratio | round(3) }}</div>
+        </div>
+        <div class="metric-card">
+          <strong>TSTR F1</strong>
+          <div>{{ metadata.ml_utility.tstr_f1 | round(3) }}</div>
+        </div>
+        <div class="metric-card">
+          <strong>TRTR F1 (baseline)</strong>
+          <div>{{ metadata.ml_utility.trtr_f1 | round(3) }}</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Model Type</td>
+            <td>{{ metadata.ml_utility.model_type }}</td>
+          </tr>
+          <tr>
+            <td>Target Column</td>
+            <td>{{ metadata.ml_utility.target_column }}</td>
+          </tr>
+          <tr>
+            <td>Number of Features</td>
+            <td>{{ metadata.ml_utility.n_features }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    {% endif %}
+
     <section>
       <h2>Metadata</h2>
       <table>
@@ -112,10 +163,12 @@
         </thead>
         <tbody>
           {% for key, value in metadata | dictsort %}
+          {% if key != 'ml_utility' and key != 'financial_facts' %}
           <tr>
             <td>{{ key }}</td>
             <td>{{ value }}</td>
           </tr>
+          {% endif %}
           {% endfor %}
         </tbody>
       </table>

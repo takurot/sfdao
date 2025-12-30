@@ -16,6 +16,7 @@ from rich.console import Console
 
 from sfdao.evaluator.scoring import CompositeScorer
 from sfdao.evaluator.financial_facts import FinancialFactsChecker
+from sfdao.evaluator.ml_utility import MLUtilityEvaluator, MLUtilityResult
 from sfdao.evaluator.privacy import PrivacyEvaluator
 from sfdao.evaluator.statistical import StatisticalEvaluator
 from sfdao.ingestion.loader import CSVLoader
@@ -37,6 +38,8 @@ def run_audit(
     console: Console,
     weights: Optional[dict[str, float]] = None,
     privacy_settings: Optional[PrivacySettings] = None,
+    ml_utility: bool = False,
+    ml_target: Optional[str] = None,
 ) -> None:
     """Run audit evaluation and generate report.
 
@@ -48,6 +51,8 @@ def run_audit(
         console: Rich console for output.
         weights: Optional dictionary of component weights.
         privacy_settings: Optional privacy evaluation settings.
+        ml_utility: If True, run ML utility (TSTR) evaluation.
+        ml_target: Target column for ML utility evaluation.
     """
     if not quiet:
         console.print("[bold blue]SFDAO Audit[/bold blue] - Starting evaluation...")
@@ -122,7 +127,7 @@ def run_audit(
     financial_facts = _compute_financial_facts(real_df, synthetic_df, shared_numeric)
 
     # Create evaluation report
-    metadata = {
+    metadata: dict[str, object] = {
         "real_file": str(real_path),
         "synthetic_file": str(synthetic_path),
         "real_rows": len(real_df),
@@ -133,6 +138,23 @@ def run_audit(
     }
     if privacy_settings and privacy_settings.sample_size:
         metadata["privacy_sample_size"] = privacy_settings.sample_size
+
+    # ML Utility evaluation (optional)
+    if ml_utility and ml_target:
+        if not quiet:
+            console.print("  Computing ML utility (TSTR)...")
+        ml_result = _compute_ml_utility(real_df, synthetic_df, ml_target, quiet, console)
+        if ml_result is not None:
+            metadata["ml_utility"] = {
+                "tstr_auc": ml_result.tstr_auc,
+                "tstr_f1": ml_result.tstr_f1,
+                "trtr_auc": ml_result.trtr_auc,
+                "trtr_f1": ml_result.trtr_f1,
+                "utility_ratio": ml_result.utility_ratio,
+                "model_type": ml_result.model_type,
+                "target_column": ml_result.target_column,
+                "n_features": ml_result.n_features,
+            }
 
     report = EvaluationReport(
         metrics=metrics,
@@ -252,3 +274,42 @@ def _select_reporter(output_path: Optional[Path]) -> PlainTextReporter | HTMLRep
     if suffix == ".pdf":
         return PDFReporter()
     return PlainTextReporter()
+
+
+def _compute_ml_utility(
+    real_df: pd.DataFrame,
+    synthetic_df: pd.DataFrame,
+    target_column: str,
+    quiet: bool,
+    console: Console,
+) -> Optional[MLUtilityResult]:
+    """Compute ML utility (TSTR) evaluation.
+
+    Args:
+        real_df: Real data DataFrame.
+        synthetic_df: Synthetic data DataFrame.
+        target_column: Target column for classification.
+        quiet: If True, suppress console output.
+        console: Rich console for output.
+
+    Returns:
+        MLUtilityResult if successful, None if evaluation fails.
+    """
+    try:
+        evaluator = MLUtilityEvaluator()
+        result = evaluator.evaluate(
+            real_df=real_df,
+            synthetic_df=synthetic_df,
+            target_column=target_column,
+        )
+        if not quiet:
+            console.print(
+                f"    TSTR AUC: {result.tstr_auc:.3f}, "
+                f"TRTR AUC: {result.trtr_auc:.3f}, "
+                f"Utility Ratio: {result.utility_ratio:.3f}"
+            )
+        return result
+    except ValueError as e:
+        if not quiet:
+            console.print(f"[yellow]Warning: ML utility evaluation failed: {e}[/yellow]")
+        return None
