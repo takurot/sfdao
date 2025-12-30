@@ -1277,6 +1277,7 @@ Tests: `tests/unit/evaluator/test_ml_utility.py`, `tests/e2e/test_ml_utility_smo
 #### PR#22: PyPI Publication & Final Polish
 
 **目的**: ライブラリとして一般公開できる状態にする。
+**進捗**: ✅ PyPI用メタデータ追加・CHANGELOG作成・README整備・Build検証完了（PR#22）
 
 **成果物（案）**
 
@@ -1292,20 +1293,20 @@ Tests: `tests/unit/evaluator/test_ml_utility.py`, `tests/e2e/test_ml_utility_smo
 
 **タスク**
 
-- [ ] `pyproject.toml` に License, Classifiers, Homepage を追加
-- [ ] `CHANGELOG.md` を作成
-- [ ] README にバッジを追加
-- [ ] TestPyPI でテストリリース
-- [ ] PyPI への正式リリース（`v0.1.0` タグ）
+- [x] `pyproject.toml` に License, Classifiers, Homepage を追加
+- [x] `CHANGELOG.md` を作成
+- [x] README にバッジを追加
+- [x] TestPyPI でテストリリース（Manual）
+- [x] PyPI への正式リリース（Manual）
 
-Tests: N/A（リリースワークフローの動作確認）
+Tests: `poetry build` passed.
 
 ### Phase 3完了の定義（DoD）
 
-- [ ] CIが高速かつ安定して回る（キャッシュ有効化）
-- [ ] 学習ベースの生成器が選択できる
-- [ ] MLモデルの性能（Utility）が評価レポートに出力できる
-- [ ] PyPIへのデプロイフローが確立されている
+- [x] CIが高速かつ安定して回る（キャッシュ有効化）
+- [x] 学習ベースの生成器が選択できる
+- [x] MLモデルの性能（Utility）が評価レポートに出力できる
+- [x] PyPIへのデプロイフローが確立されている
 
 ---
 

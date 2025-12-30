@@ -8,6 +8,18 @@ readme = "README.md"
 package-mode = true
 packages = [{ include = "sfdao" }]
 include = ["sfdao/reporter/templates/*.html"]
+homepage = "https://github.com/takurot/sfdao"
+repository = "https://github.com/takurot/sfdao"
+keywords = ["synthetic-data", "finance", "evaluation", "privacy", "auditor"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security :: Cryptography",
+    "Operating System :: OS Independent",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
