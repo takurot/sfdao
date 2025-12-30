@@ -70,9 +70,7 @@ class CTGANGenerator(BaseGenerator):
         # Actually it does not.
         # But we can try to set global seeds if needed,
         # but let's just straightforwardly call sample.
-        df = pd.DataFrame(
-            self._synthesizer.sample(num_rows=n_samples)
-        )
+        df = pd.DataFrame(self._synthesizer.sample(num_rows=n_samples))
 
         if self.scenario:
             df, _ = self.scenario.apply(df)
