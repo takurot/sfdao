@@ -11,7 +11,7 @@
 
 ## Overview
 
-SFDAOは、金融業界向けの合成データ（Synthetic Data）の品質を監査・評価するためのツールです。Phase 1では、既存データの品質評価に特化した「The Auditor」機能を提供します。
+SFDAOは、金融業界向けの合成データ（Synthetic Data）の生成・制約適用・監査を一体化したツールです。Phase 1〜3で、監査（Audit）だけでなく生成（Generate）、制約チェック（Guard）、シナリオ注入（Scenario）、ML Utility評価まで対応しています。
 
 ### 主な機能
 
@@ -19,6 +19,9 @@ SFDAOは、金融業界向けの合成データ（Synthetic Data）の品質を�
 - **金融特有の評価**: Fat Tail検出、Volatility Clusteringの確認
 - **プライバシー評価**: 再識別リスク、Distance to Closest Record
 - **自動型検出**: 数値、カテゴリ、日時、PII（個人特定情報）の自動判定
+- **生成ワークフロー**: `generate`/`run` による合成データ生成と監査の一括実行
+- **制約・シナリオ**: Guardルール適用、シナリオ注入（scale/shift/clip/outlier等）
+- **ML Utility評価**: TSTR（AUC/F1）によるモデル性能評価（任意）
 - **レポート生成**: HTML/PDF形式での詳細レポート出力
 
 ## Installation
@@ -75,6 +78,9 @@ poetry run sfdao audit \
   --real example/data/creditcard_real_sample.csv \
   --synthetic example/output/creditcard_synthetic.csv \
   --output example/output/report.html
+
+# Phase 2: 生成→制約→監査を一括実行
+poetry run sfdao run --config example/config/phase2.yaml --outdir example/output
 ```
 
 ## Development
@@ -125,6 +131,10 @@ bandit -r sfdao
 sfdao/
 ├── sfdao/                  # メインパッケージ
 │   ├── ingestion/          # データ取り込みと型検出
+│   ├── config/             # 設定スキーマ/ローダー
+│   ├── generator/          # 合成データ生成
+│   ├── guard/              # ルールベース制約チェック
+│   ├── scenario/           # シナリオ注入
 │   ├── evaluator/          # 評価指標の計算
 │   ├── reporter/           # レポート生成
 │   └── cli/                # CLIインターフェース
@@ -148,7 +158,7 @@ sfdao/
 
 ## Roadmap
 
-### Phase 1: "The Auditor" (MVP) - 現在のフェーズ
+### Phase 1: "The Auditor" (MVP)
 
 - [x] プロジェクト構造とCI/CD設定
 - [x] Data Ingestion基本機能
@@ -164,11 +174,21 @@ sfdao/
 
 ### Phase 2: "The Generator & Logic"
 
-- [x] Hybrid Generator実装（CTGAN, Copula, LLM）
-- [x] Constraint & Logic Guard（会計恒等式チェック）
-- [x] Scenario Injection（ストレステスト）
+- [x] 設定スキーマ/ローダーとCLI統合（`generate`/`run`）
+- [x] Baseline Generator（統計サンプリング）
+- [x] Constraint & Logic Guard（ルール検出/除外/補正）
+- [x] Scenario Injection（scale/shift/clip/outlier等）
+- [x] E2Eワークフロー（generate→guard→audit）
+- [x] ベンチマークとPrivacyサンプリング
 
-### Phase 3: "The Optimizer"
+### Phase 3: "The Professional"
+
+- [x] CI/CD最適化とReleaseワークフロー
+- [x] Advanced Generator（CTGAN, optional）
+- [x] ML Utility評価（TSTR: AUC/F1）
+- [x] PyPIメタデータ/CHANGELOG/README整備
+
+### Future Ideas
 
 - Rule Learning Engine（強化学習ベース）
 - Auto-Tuning Mode（自律的品質改善）
