@@ -7,10 +7,11 @@ import threading
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
+from types import TracebackType
 from typing import Iterable, Iterator, Optional, TypeVar
 
 from rich.console import Console
-from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 
 T = TypeVar("T")
 
@@ -46,7 +47,12 @@ class StatusHeartbeat:
         self._register_atexit()
         return self
 
-    def __exit__(self, exc_type, exc: object, exc_tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         self.stop()
 
     def _run(self) -> None:
@@ -124,7 +130,7 @@ class AuditProgress:
 
 
 class _ProgressIterable(Iterable[T]):
-    def __init__(self, progress: Progress, task_id: int, iterable: Iterable[T]) -> None:
+    def __init__(self, progress: Progress, task_id: TaskID, iterable: Iterable[T]) -> None:
         self._progress = progress
         self._task_id = task_id
         self._iterable = iterable
