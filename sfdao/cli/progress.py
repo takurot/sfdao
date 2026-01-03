@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import atexit
 import threading
 import time
 from contextlib import contextmanager
@@ -34,6 +35,7 @@ class StatusHeartbeat:
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
         self._start_time: Optional[float] = None
+        self._atexit_registered = False
 
     def __enter__(self) -> "StatusHeartbeat":
         if not self._enabled:
@@ -41,19 +43,29 @@ class StatusHeartbeat:
         self._start_time = time.monotonic()
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
+        self._register_atexit()
         return self
 
     def __exit__(self, exc_type, exc: object, exc_tb) -> None:
-        if not self._enabled:
-            return
-        self._stop_event.set()
-        if self._thread:
-            self._thread.join(timeout=self._interval)
+        self.stop()
 
     def _run(self) -> None:
         while not self._stop_event.wait(self._interval):
             elapsed = 0.0 if self._start_time is None else time.monotonic() - self._start_time
             self._console.print(f"  ... {self._label} ({elapsed:.0f}s elapsed)")
+
+    def _register_atexit(self) -> None:
+        if self._atexit_registered or not self._enabled:
+            return
+        atexit.register(self.stop)
+        self._atexit_registered = True
+
+    def stop(self) -> None:
+        if not self._enabled:
+            return
+        self._stop_event.set()
+        if self._thread:
+            self._thread.join(timeout=self._interval)
 
 
 class AuditProgress:
