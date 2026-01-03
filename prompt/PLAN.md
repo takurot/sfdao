@@ -1361,6 +1361,23 @@ Tests: `tests/unit/cli/test_audit_progress.py`, `tests/integration/test_audit_pr
 
 ---
 
+### Next Task: mypy missing stubs cleanup
+
+**背景**: CIのmypyで `pandas` などの型スタブ不足が原因でエラーが発生しうる。
+
+**対応方針（本PRで整理済み）**
+
+- `pandas-stubs` は `pyproject.toml` の dev 依存に固定で追加（`poetry install` に含める）
+- 追加が必要なスタブは明示依存として足す（例: `types-PyYAML`）
+- `mypy --install-types` はCIでは使わず、依存を明示する方針
+
+**受け入れ条件（DoD）**
+
+- `poetry run mypy sfdao` がスタブ不足で落ちない
+- CIのmypyが通ることを確認
+
+---
+
 ## 環境設定
 
 以下の内容で開発を進めます：
