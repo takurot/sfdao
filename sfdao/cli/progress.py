@@ -74,9 +74,7 @@ class AuditProgress:
             self._console.print(f"Phase: {label}")
         else:
             self._current_step += 1
-            self._console.print(
-                f"Step {self._current_step}/{self._config.total_steps}: {label}"
-            )
+            self._console.print(f"Step {self._current_step}/{self._config.total_steps}: {label}")
 
         return StatusHeartbeat(
             self._console,
