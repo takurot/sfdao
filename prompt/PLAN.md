@@ -1301,12 +1301,80 @@ Tests: `tests/unit/evaluator/test_ml_utility.py`, `tests/e2e/test_ml_utility_smo
 
 Tests: `poetry build` passed.
 
+---
+
+#### PR#23: Audit UX & Progress Reporting
+
+**目的**: 長時間実行時に進捗・ステータスが分かりづらい問題を解消し、CLI体験を改善する。
+**進捗**: ✅ 進捗表示/ハートビート/詳細ログの追加とCLIオプション実装、ユニット/統合テスト追加完了（PR#23）
+
+**背景**
+
+- 大規模データの `sfdao audit` 実行時、処理が長く「現在何をしているか」が分からない。
+- ターミナル上で中間状況（フェーズ、推定残り時間、現在の計算対象）が可視化される必要がある。
+
+**成果物（案）**
+
+- CLIに進捗表示・ステータス出力（Rich progress or simple text）
+- フェーズ単位のログ出力（例: Load → Schema → Stats → Privacy → Report）
+- 長時間計算の heartbeat 出力（一定間隔で進捗/所要時間/対象件数）
+- Quiet/No-progress モード（CI/ログ用途）
+
+**UX仕様（案）**
+
+1. **フェーズ表示**
+   - 各主要評価フェーズの開始・完了を明確に出力
+   - 表示例: `Step 3/6: Privacy Evaluation (sample=5000)`
+2. **進捗インジケータ**
+   - 可能なタスクは進捗バー（行数/列数ベース）で表示
+   - 不可能なタスクはスピナー＋経過時間
+3. **ハートビート**
+   - `--status-interval`（秒）で定期出力（既定: 30秒）
+   - 出力内容: 経過時間、現在フェーズ、処理対象数、メモリ（可能なら）
+4. **オプション**
+   - `--quiet` は現行通り（完全抑制）
+   - `--no-progress` で進捗UIを無効化（ログのみ）
+   - `--verbose` で詳細ログ（サンプリング数、閾値など）
+
+**受け入れ条件（DoD）**
+
+- `sfdao audit` 実行中にフェーズ遷移が分かる
+- 30秒以上の処理で定期的な状況出力が行われる
+- `--quiet`/`--no-progress` で出力制御が可能
+- 既存のテストが壊れない（CLI引数の互換性維持）
+
+**タスク**
+
+- [x] `sfdao/cli/main.py` に進捗/ステータス出力の設計を追加
+- [x] 各評価器（statistics/privacy/financial/ml）にフェーズ境界フックを用意
+- [x] `--status-interval` / `--no-progress` / `--verbose` をCLIに追加
+- [x] ユニットテスト：引数パース/出力抑制/デフォルト動作
+
+Tests: `tests/unit/cli/test_audit_progress.py`, `tests/integration/test_audit_progress.py`
+
 ### Phase 3完了の定義（DoD）
 
 - [x] CIが高速かつ安定して回る（キャッシュ有効化）
 - [x] 学習ベースの生成器が選択できる
 - [x] MLモデルの性能（Utility）が評価レポートに出力できる
 - [x] PyPIへのデプロイフローが確立されている
+
+---
+
+### Next Task: mypy missing stubs cleanup
+
+**背景**: CIのmypyで `pandas` などの型スタブ不足が原因でエラーが発生しうる。
+
+**対応方針（本PRで整理済み）**
+
+- `pandas-stubs` は `pyproject.toml` の dev 依存に固定で追加（`poetry install` に含める）
+- 追加が必要なスタブは明示依存として足す（例: `types-PyYAML`）
+- `mypy --install-types` はCIでは使わず、依存を明示する方針
+
+**受け入れ条件（DoD）**
+
+- `poetry run mypy sfdao` がスタブ不足で落ちない
+- CIのmypyが通ることを確認
 
 ---
 

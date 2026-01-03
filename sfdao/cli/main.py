@@ -138,6 +138,27 @@ def audit(
             help="Suppress console output (only write to file if --output is specified).",
         ),
     ] = False,
+    no_progress: Annotated[
+        bool,
+        typer.Option(
+            "--no-progress",
+            help="Disable progress indicators (useful for CI/log-only runs).",
+        ),
+    ] = False,
+    status_interval: Annotated[
+        float,
+        typer.Option(
+            "--status-interval",
+            help="Seconds between status updates during long-running phases.",
+        ),
+    ] = 30.0,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            help="Enable verbose status output during audit.",
+        ),
+    ] = False,
 ) -> None:
     """Run audit evaluation on synthetic data against real data.
 
@@ -177,6 +198,9 @@ def audit(
         console=console,
         ml_utility=ml_utility,
         ml_target=ml_target,
+        status_interval=status_interval,
+        no_progress=no_progress,
+        verbose=verbose,
     )
 
 
