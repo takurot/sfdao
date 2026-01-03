@@ -14,6 +14,8 @@ import pandas as pd
 from numpy.typing import NDArray
 from rich.console import Console
 
+from sfdao.cli.progress import AuditProgress, AuditProgressConfig
+from sfdao.config.models import PrivacySettings
 from sfdao.evaluator.scoring import CompositeScorer
 from sfdao.evaluator.financial_facts import FinancialFactsChecker
 from sfdao.evaluator.ml_utility import MLUtilityEvaluator, MLUtilityResult
@@ -27,9 +29,6 @@ from sfdao.reporter.pdf import PDFReporter
 __all__ = ["run_audit"]
 
 
-from sfdao.config.models import PrivacySettings
-
-
 def run_audit(
     real_path: Path,
     synthetic_path: Path,
@@ -40,6 +39,9 @@ def run_audit(
     privacy_settings: Optional[PrivacySettings] = None,
     ml_utility: bool = False,
     ml_target: Optional[str] = None,
+    status_interval: float = 30.0,
+    no_progress: bool = False,
+    verbose: bool = False,
 ) -> None:
     """Run audit evaluation and generate report.
 
@@ -54,13 +56,25 @@ def run_audit(
         ml_utility: If True, run ML utility (TSTR) evaluation.
         ml_target: Target column for ML utility evaluation.
     """
+    progress = AuditProgress(
+        console,
+        AuditProgressConfig(
+            total_steps=6,
+            quiet=quiet,
+            no_progress=no_progress,
+            status_interval=status_interval,
+            verbose=verbose,
+        ),
+    )
+
     if not quiet:
         console.print("[bold blue]SFDAO Audit[/bold blue] - Starting evaluation...")
 
     # Load data
     loader = CSVLoader()
-    real_df = loader.load(str(real_path))
-    synthetic_df = loader.load(str(synthetic_path))
+    with progress.start_phase("Load data"):
+        real_df = loader.load(str(real_path))
+        synthetic_df = loader.load(str(synthetic_path))
 
     if not quiet:
         console.print(f"  Real data: {len(real_df)} rows, {len(real_df.columns)} columns")
@@ -74,76 +88,93 @@ def run_audit(
 
     numeric_columns = real_df.select_dtypes(include=["number"]).columns.tolist()
     shared_numeric = [col for col in numeric_columns if col in synthetic_df.columns]
+    progress.log_verbose(f"Shared numeric columns: {len(shared_numeric)}")
 
-    if shared_numeric:
-        # Calculate average KS statistic across all numeric columns
-        ks_statistics = []
-        js_divergences = []
+    with progress.start_phase(
+        "Statistical evaluation",
+        detail=f"{len(shared_numeric)} numeric columns" if shared_numeric else "no numeric overlap",
+    ):
+        if shared_numeric:
+            # Calculate average KS statistic across all numeric columns
+            ks_statistics = []
+            js_divergences = []
 
-        for col in shared_numeric:
-            if col in synthetic_df.columns:
-                real_values = real_df[col].dropna().values
-                synthetic_values = synthetic_df[col].dropna().values
+            with progress.track(shared_numeric, "  Computing statistical metrics") as columns:
+                for col in columns:
+                    real_values = real_df[col].dropna().values
+                    synthetic_values = synthetic_df[col].dropna().values
 
-                if len(real_values) > 0 and len(synthetic_values) > 0:
-                    # KS test
-                    ks_result = statistical_evaluator.ks_test(real_values, synthetic_values)
-                    ks_statistics.append(ks_result.statistic)
+                    if len(real_values) > 0 and len(synthetic_values) > 0:
+                        # KS test
+                        ks_result = statistical_evaluator.ks_test(real_values, synthetic_values)
+                        ks_statistics.append(ks_result.statistic)
 
-                    # JS divergence
-                    js_result = statistical_evaluator.js_divergence(real_values, synthetic_values)
-                    js_divergences.append(js_result)
+                        # JS divergence
+                        js_result = statistical_evaluator.js_divergence(
+                            real_values, synthetic_values
+                        )
+                        js_divergences.append(js_result)
 
-        # Convert to quality scores (1 - statistic, higher is better)
-        if ks_statistics:
-            avg_ks = sum(ks_statistics) / len(ks_statistics)
-            metrics["quality"] = max(0.0, 1.0 - avg_ks)
+            # Convert to quality scores (1 - statistic, higher is better)
+            if ks_statistics:
+                avg_ks = sum(ks_statistics) / len(ks_statistics)
+                metrics["quality"] = max(0.0, 1.0 - avg_ks)
+            else:
+                metrics["quality"] = 0.5
+
+            if js_divergences:
+                avg_js = sum(js_divergences) / len(js_divergences)
+                metrics["utility"] = max(0.0, 1.0 - avg_js)
+            else:
+                metrics["utility"] = 0.5
         else:
             metrics["quality"] = 0.5
-
-        if js_divergences:
-            avg_js = sum(js_divergences) / len(js_divergences)
-            metrics["utility"] = max(0.0, 1.0 - avg_js)
-        else:
             metrics["utility"] = 0.5
-    else:
-        metrics["quality"] = 0.5
-        metrics["utility"] = 0.5
 
-    privacy_score, privacy_risk, privacy_dcr_median = _compute_privacy_scores(
-        real_df, synthetic_df, shared_numeric, privacy_settings
-    )
-    metrics["privacy"] = privacy_score
+    with progress.start_phase(
+        "Privacy evaluation",
+        detail=f"sample={privacy_settings.sample_size}" if privacy_settings else None,
+    ):
+        privacy_score, privacy_risk, privacy_dcr_median = _compute_privacy_scores(
+            real_df, synthetic_df, shared_numeric, privacy_settings
+        )
+        metrics["privacy"] = privacy_score
 
-    if not quiet:
-        console.print("  Calculating composite score...")
+    with progress.start_phase("Financial facts"):
+        financial_facts = _compute_financial_facts(real_df, synthetic_df, shared_numeric)
 
-    # Calculate composite score
-    if weights is None:
-        weights = {"quality": 0.4, "utility": 0.3, "privacy": 0.3}
-    scorer = CompositeScorer(weights)
-    composite_score = scorer.calculate(metrics)
-
-    financial_facts = _compute_financial_facts(real_df, synthetic_df, shared_numeric)
-
-    # Create evaluation report
-    metadata: dict[str, object] = {
-        "real_file": str(real_path),
-        "synthetic_file": str(synthetic_path),
-        "real_rows": len(real_df),
-        "synthetic_rows": len(synthetic_df),
-        "privacy_risk": privacy_risk,
-        "privacy_dcr_median": privacy_dcr_median,
-        "financial_facts": financial_facts,
-    }
-    if privacy_settings and privacy_settings.sample_size:
-        metadata["privacy_sample_size"] = privacy_settings.sample_size
-
-    # ML Utility evaluation (optional)
     if ml_utility and ml_target:
+        with progress.start_phase("ML utility evaluation"):
+            if not quiet:
+                console.print("  Computing ML utility (TSTR)...")
+            ml_result = _compute_ml_utility(real_df, synthetic_df, ml_target, quiet, console)
+    else:
+        with progress.start_phase("ML utility evaluation", detail="disabled"):
+            ml_result = None
+
+    with progress.start_phase("Report output"):
         if not quiet:
-            console.print("  Computing ML utility (TSTR)...")
-        ml_result = _compute_ml_utility(real_df, synthetic_df, ml_target, quiet, console)
+            console.print("  Calculating composite score...")
+        # Calculate composite score
+        if weights is None:
+            weights = {"quality": 0.4, "utility": 0.3, "privacy": 0.3}
+        scorer = CompositeScorer(weights)
+        composite_score = scorer.calculate(metrics)
+
+        # Create evaluation report
+        metadata: dict[str, object] = {
+            "real_file": str(real_path),
+            "synthetic_file": str(synthetic_path),
+            "real_rows": len(real_df),
+            "synthetic_rows": len(synthetic_df),
+            "privacy_risk": privacy_risk,
+            "privacy_dcr_median": privacy_dcr_median,
+            "financial_facts": financial_facts,
+        }
+        if privacy_settings and privacy_settings.sample_size:
+            metadata["privacy_sample_size"] = privacy_settings.sample_size
+
+        # ML Utility evaluation (optional)
         if ml_result is not None:
             metadata["ml_utility"] = {
                 "tstr_auc": ml_result.tstr_auc,
@@ -156,34 +187,35 @@ def run_audit(
                 "n_features": ml_result.n_features,
             }
 
-    report = EvaluationReport(
-        metrics=metrics,
-        composite_score=composite_score,
-        metadata=metadata,
-    )
-
-    reporter = _select_reporter(output_path)
-
-    # Output report
-    if output_path:
-        reporter.render_to_file(report, output_path)
-        if not quiet:
-            console.print(f"[green]✓[/green] Report saved to: {output_path}")
-    else:
-        report_text = reporter.generate(report)
-        if not quiet:
-            console.print("\n[bold]Evaluation Report:[/bold]")
-            if isinstance(report_text, bytes):
-                console.print(
-                    "[yellow]Binary report generated. Use --output to save to a file.[/yellow]"
-                )
-            else:
-                console.print(report_text)
-
-    if not quiet:
-        console.print(
-            f"\n[bold green]Audit complete![/bold green] Overall Score: {composite_score.total:.3f}"
+        report = EvaluationReport(
+            metrics=metrics,
+            composite_score=composite_score,
+            metadata=metadata,
         )
+
+        reporter = _select_reporter(output_path)
+
+        # Output report
+        if output_path:
+            reporter.render_to_file(report, output_path)
+            if not quiet:
+                console.print(f"[green]✓[/green] Report saved to: {output_path}")
+        else:
+            report_text = reporter.generate(report)
+            if not quiet:
+                console.print("\n[bold]Evaluation Report:[/bold]")
+                if isinstance(report_text, bytes):
+                    console.print(
+                        "[yellow]Binary report generated. Use --output to save to a file.[/yellow]"
+                    )
+                else:
+                    console.print(report_text)
+
+        if not quiet:
+            console.print(
+                f"\n[bold green]Audit complete![/bold green] Overall Score: "
+                f"{composite_score.total:.3f}"
+            )
 
 
 def _compute_privacy_scores(
