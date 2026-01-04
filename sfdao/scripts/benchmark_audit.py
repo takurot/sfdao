@@ -1,133 +1,85 @@
-import argparse
-import sys
+
+import cProfile
+import pstats
 import time
 from pathlib import Path
+import pandas as pd
 from rich.console import Console
-from rich.table import Table
-from sfdao.generator.baseline import BaselineGenerator
-from sfdao.ingestion.loader import CSVLoader
+
 from sfdao.cli.audit import run_audit
-from sfdao.config.models import PrivacySettings
+from sfdao.scripts.generate_test_synthetic_data import generate_simple_synthetic
 
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Benchmark SFDAO generation and audit.")
-    parser.add_argument("--real", required=True, type=Path, help="Path to real data CSV")
-    parser.add_argument("--output-dir", required=True, type=Path, help="Directory to save outputs")
-    parser.add_argument("--sizes", default="1000,10000", help="Comma-separated sizes to benchmark")
-    parser.add_argument(
-        "--privacy-sample-size", type=int, help="Sample size for privacy optimization"
-    )
-
-    args = parser.parse_args()
+def benchmark_audit(n_rows: int = 200000):
     console = Console()
+    console.print(f"[bold blue]Starting benchmark with {n_rows} rows...[/bold blue]")
 
-    real_path = args.real
-    output_dir = args.output_dir
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # 1. Setup Data
+    base_dir = Path("benchmarks/data")
+    base_dir.mkdir(parents=True, exist_ok=True)
+    
+    real_source = Path("example/data/creditcard_10000.csv")
+    if not real_source.exists():
+        console.print("[red]Error: example/data/creditcard.csv not found.[/red]")
+        return
 
-    sizes = [int(s) for s in args.sizes.split(",")]
-    console.print("[bold blue]Starting Benchmark[/bold blue]")
-    console.print(f"Sizes: {sizes}")
-    console.print(f"Privacy Sample Size: {args.privacy_sample_size}")
+    real_bench_path = base_dir / f"real_{n_rows}.csv"
+    synthetic_bench_path = base_dir / f"synthetic_{n_rows}.csv"
+    report_path = base_dir / f"report_{n_rows}.html"
 
-    # 1. Load Data
-    start_time = time.time()
-    loader = CSVLoader()
-    try:
-        real_df_full = loader.load(str(real_path))
-        load_time = time.time() - start_time
-        console.print(f"Data Loading: {load_time:.4f}s ({len(real_df_full)} rows total)")
-    except Exception as e:
-        console.print(f"[red]Error loading data: {e}[/red]")
-        sys.exit(1)
-
-    results = []
-
-    for size in sizes:
-        console.print(f"\n[bold]Benchmarking Size: {size}[/bold]")
-
-        # Prepare Data
-        if len(real_df_full) >= size:
-            real_df = real_df_full.sample(n=size, random_state=42)
+    # Prepare Real Data (Resample if needed to reach n_rows)
+    if not real_bench_path.exists():
+        console.print("Preparing real data...")
+        df_full = pd.read_csv(real_source)
+        if len(df_full) >= n_rows:
+            df_real = df_full.head(n_rows)
         else:
-            console.print(
-                f"[yellow]Warning: Requested size {size} > "
-                f"real data size {len(real_df_full)}. Using full data.[/yellow]"
-            )
-            real_df = real_df_full.copy()
-            # If we can't reach the size for real data, we still generate 'size'
-            # rows for synthetic? Usually strict benchmark implies real=size.
-            # But if real is small, we can override size to match real for
-            # fairness, OR upscale synthetic.
-            # Let's upscale synthetic to requested size, but keep real as max available.
-
-        current_real_path = output_dir / f"real_subset_{size}.csv"
-        real_df.to_csv(current_real_path, index=False)
-
-        synthetic_path = output_dir / f"synthetic_{size}.csv"
-        report_path = output_dir / f"report_{size}.txt"
-
-        # 2. Generation
-        start_time = time.time()
-        generator = BaselineGenerator(seed=42)
-        generator.fit(real_df)
-        fit_time = time.time() - start_time
-
-        sample_start = time.time()
-        # Generate requested size
-        synthetic_df = generator.sample(size)
-        sample_time = time.time() - sample_start
-
-        synthetic_df.to_csv(synthetic_path, index=False)
-        total_gen_time = fit_time + sample_time
-
-        console.print(
-            f"Gen Time:    {total_gen_time:.4f}s (Fit: {fit_time:.2f}s, Sample: {sample_time:.2f}s)"
+            # Resample with replacement to reach n_rows
+            df_real = df_full.sample(n=n_rows, replace=True, random_state=42)
+        df_real.to_csv(real_bench_path, index=False)
+    
+    # Generate Synthetic Data
+    if not synthetic_bench_path.exists():
+        console.print("Generating synthetic data...")
+        generate_simple_synthetic(
+            real_csv_path=real_bench_path,
+            output_path=synthetic_bench_path,
+            n_samples=n_rows,
+            random_state=42
         )
 
-        # 3. Audit
-        privacy_settings = None
-        if args.privacy_sample_size:
-            privacy_settings = PrivacySettings(sample_size=args.privacy_sample_size)
-
-        start_time = time.time()
-        try:
-            run_audit(
-                real_path=current_real_path,
-                synthetic_path=synthetic_path,
-                output_path=report_path,
-                quiet=True,
-                console=console,
-                privacy_settings=privacy_settings,
-            )
-            audit_time = time.time() - start_time
-            console.print(f"Audit Time:  {audit_time:.4f}s")
-        except Exception as e:
-            console.print(f"[red]Error during audit: {e}[/red]")
-            audit_time = -1.0
-
-        results.append(
-            {
-                "Size": str(size),
-                "Gen (s)": f"{total_gen_time:.4f}",
-                "Audit (s)": f"{audit_time:.4f}",
-            }
+    # 2. Run Benchmark with Profiling
+    console.print("Running audit with cProfile...")
+    
+    profiler = cProfile.Profile()
+    profiler.enable()
+    
+    start_time = time.time()
+    try:
+        run_audit(
+            real_path=real_bench_path,
+            synthetic_path=synthetic_bench_path,
+            output_path=report_path,
+            quiet=True,
+            console=console,
+            no_progress=True, # Disable progress UI for clean profiling
         )
-
-    # Summary Table
-    console.print("\n[bold]Benchmark Results[/bold]")
-    table = Table(show_header=True, header_style="bold magenta")
-    table.add_column("Size")
-    table.add_column("Gen (s)")
-    table.add_column("Audit (s)")
-
-    for res in results:
-        table.add_row(res["Size"], res["Gen (s)"], res["Audit (s)"])
-
-    console.print(table)
-    console.print(f"\nOutputs saved to: {output_dir}")
-
+    except Exception as e:
+        console.print(f"[red]Audit failed: {e}[/red]")
+    
+    end_time = time.time()
+    profiler.disable()
+    
+    console.print(f"[bold green]Audit completed in {end_time - start_time:.2f} seconds[/bold green]")
+    
+    # 3. Save Profile Stats
+    stats_path = base_dir / f"audit_{n_rows}.prof"
+    stats = pstats.Stats(profiler)
+    stats.dump_stats(stats_path)
+    console.print(f"Profile stats saved to {stats_path}")
+    
+    # Print Top 20 Bottlenecks
+    console.print("\n[bold]Top 20 Time-Consuming Functions:[/bold]")
+    stats.sort_stats(pstats.SortKey.CUMULATIVE).print_stats(20)
 
 if __name__ == "__main__":
-    main()
+    benchmark_audit(200000)

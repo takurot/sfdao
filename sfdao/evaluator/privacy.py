@@ -4,6 +4,7 @@ from typing import Iterable
 
 import numpy as np
 from numpy.typing import NDArray
+from sklearn.neighbors import KDTree
 
 __all__ = ["PrivacyEvaluator"]
 
@@ -18,28 +19,46 @@ class PrivacyEvaluator:
         self,
         real: Iterable[Iterable[float]] | NDArray[np.float64],
         synthetic: Iterable[Iterable[float]] | NDArray[np.float64],
+        progress_callback: callable[[int], None] | None = None,
+        batch_size: int = 1000,
     ) -> NDArray[np.float64]:
         real_arr = self._prepare_matrix(real)
         synthetic_arr = self._prepare_matrix(synthetic)
         self._ensure_non_empty(real_arr, synthetic_arr)
 
-        distances = np.empty(synthetic_arr.shape[0], dtype=np.float64)
-        for idx, record in enumerate(synthetic_arr):
-            diffs = real_arr - record
-            norms = np.linalg.norm(diffs, axis=1)
-            distances[idx] = float(np.min(norms))
+        # Optimization: Use KDTree for nearest neighbor search
+        tree = KDTree(real_arr)
+        
+        n_synthetic = len(synthetic_arr)
+        distances = np.zeros(n_synthetic, dtype=np.float64)
+        
+        # Batch processing for progress reporting
+        for start_idx in range(0, n_synthetic, batch_size):
+            end_idx = min(start_idx + batch_size, n_synthetic)
+            batch = synthetic_arr[start_idx:end_idx]
+            
+            # k=1 returns (distances, indices) for the nearest neighbor
+            batch_dists, _ = tree.query(batch, k=1)
+            distances[start_idx:end_idx] = batch_dists.ravel()
+            
+            if progress_callback:
+                progress_callback(len(batch))
+
         return distances
 
     def reidentification_risk(
         self,
         real: Iterable[Iterable[float]] | NDArray[np.float64],
         synthetic: Iterable[Iterable[float]] | NDArray[np.float64],
+        progress_callback: callable[[int], None] | None = None,
     ) -> float:
         real_arr = self._prepare_matrix(real)
         synthetic_arr = self._prepare_matrix(synthetic)
         self._ensure_non_empty(real_arr, synthetic_arr)
 
-        dcr = self.distance_to_closest_record(real_arr, synthetic_arr)
+        dcr = self.distance_to_closest_record(
+            real_arr, synthetic_arr, progress_callback=progress_callback
+        )
         scale = self._reference_distance(real_arr)
 
         scaled = np.exp(-dcr / (scale + 1e-12))
@@ -77,19 +96,32 @@ class PrivacyEvaluator:
             spread = float(np.max(np.std(real, axis=0, ddof=0))) if real.size else 1.0
             return 1.0 if spread == 0 else spread
 
-        nearest_neighbors = []
-        for idx in range(real.shape[0]):
-            others = np.concatenate((real[:idx], real[idx + 1 :]), axis=0)
-            if others.size == 0:
-                continue
-            distances = np.linalg.norm(others - real[idx], axis=1)
-            nearest_neighbors.append(float(np.min(distances)))
+        # Optimization: Use KDTree to find nearest neighbor distance (excluding self)
+        tree = KDTree(real)
 
-        if not nearest_neighbors:
-            return 1.0
+        # Optimization: Sample query points if dataset is large
+        # We only need an estimate of the median distance, so a sample is sufficient.
+        query_points = real
+        # Default to 10k samples for reference distance even if sample_size is None
+        # because this is just for scaling parameter estimation.
+        ref_sample_limit = self.sample_size if self.sample_size is not None else 10000
+        
+        if len(real) > ref_sample_limit:
+            indices = np.random.choice(len(real), ref_sample_limit, replace=False)
+            query_points = real[indices]
+        
+        # k=2 because the nearest neighbor of a point is itself (distance 0)
+        distances, _ = tree.query(query_points, k=2)
+        
+        # Take the 2nd column (distance to the closest OTHER point)
+        nearest_neighbor_dists = distances[:, 1]
 
-        reference = float(np.median(nearest_neighbors))
+        if nearest_neighbor_dists.size == 0:
+             return 1.0
+
+        reference = float(np.median(nearest_neighbor_dists))
         if reference == 0.0:
             spread = float(np.max(np.std(real, axis=0, ddof=0)))
             reference = spread if spread > 0 else 1.0
         return reference
+
