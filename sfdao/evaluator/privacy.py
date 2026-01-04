@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Optional, Callable
-from collections.abc import Sequence
+from typing import Iterable, Callable
 
 import numpy as np
 from numpy.typing import NDArray

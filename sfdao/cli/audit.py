@@ -283,7 +283,9 @@ def _compute_privacy_scores(
 
     try:
         risk = evaluator.reidentification_risk(
-            real_matrix, synthetic_matrix, progress_callback=progress_callback
+            real_matrix,
+            synthetic_matrix,
+            progress_callback=progress_callback,
         )
         # Note: privacy.py's reidentification_risk calls DCR which calls dcr with callback
         # But `reidentification_risk` also calls `_reference_distance` which is now fast (sampled).
@@ -314,7 +316,9 @@ def _compute_privacy_scores(
 
         # REFACTOR: Calculate DCR once with progress.
         dcr = evaluator.distance_to_closest_record(
-            real_matrix, synthetic_matrix, progress_callback=progress_callback
+            real_matrix,
+            synthetic_matrix,
+            progress_callback=progress_callback,
         )
 
         # Calculate Risk using the DCR we just got (avoiding 2nd heavy calc)
