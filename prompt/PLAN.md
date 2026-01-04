@@ -1352,6 +1352,35 @@ Tests: `poetry build` passed.
 
 Tests: `tests/unit/cli/test_audit_progress.py`, `tests/integration/test_audit_progress.py`
 
+#### PR#24: Performance Optimization for Large Datasets (200k rows)
+
+**目的**: 20万行規模のデータセットにおいて `sfdao audit` の実行時間を短縮し、実用的な速度で動作させる。
+**背景**: 現状、大規模データ（約20万行）の監査において処理時間が長くなっており、改善が求められている。
+
+**成果物（案）**
+
+- プロファイリングレポート（ボトルネックの特定）
+- 最適化された主要評価モジュール（特に PrivacyEvaluator や 統計計算）
+- 必要に応じた並列処理やサンプリングロジックの導入
+
+**受け入れ条件（DoD）**
+
+- 20万行データの監査が目標時間（例: 現状の50%以下、または具体的な分数はプロファイリング後に決定）で完了する
+- 高速化によって評価スコアの精度が（許容範囲を超えて）劣化していない
+- メモリ使用量が適切な範囲に収まっている
+
+**タスク**
+
+- [x] プロファイリングを行い、ボトルネック（CPU/Memory）を特定する
+- [x] 統計計算（KS検定、分布比較）のベクトル化・最適化
+- [x] PrivacyEvaluator（再識別リスク）の計算効率化（KDTree, サンプリング等）
+- [ ] 必要に応じて並列化（multiprocessing）を検討・実装
+- [x] ベンチマークテストでの性能検証
+
+Tests: `sfdao/scripts/benchmark_audit.py` を用いた比較検証
+
+---
+
 ### Phase 3完了の定義（DoD）
 
 - [x] CIが高速かつ安定して回る（キャッシュ有効化）
