@@ -1,15 +1,15 @@
 # SFDAO Example
 
-To allow new users to quickly try out `sfdao`, we provide samples under `example/` that reproduce the entire flow from "Data Preparation -> Audit -> Report Output".
+`sfdao` を初見のユーザーでも最短で試せるように、`example/` 配下に「データ準備 → 監査 → レポート出力」までを再現できるサンプルを用意しています。
 
-## Prerequisites
+## 前提
 
-- `poetry install` has been run at the repository root.
-- All commands should be executed from the repository root.
+- リポジトリルートで `poetry install` 済み
+- コマンドはすべてリポジトリルートから実行する
 
-## Execution Procedure (HTML Report)
+## 実行手順（HTMLレポート）
 
-### 1) Synthetic Data Generation
+### 1) 合成データ生成
 
 ```bash
 poetry run python -m sfdao.scripts.generate_test_synthetic_data \
@@ -19,7 +19,7 @@ poetry run python -m sfdao.scripts.generate_test_synthetic_data \
   --random-state 42
 ```
 
-### 2) Run Audit (Report Output)
+### 2) 監査実行（レポート出力）
 
 ```bash
 poetry run sfdao audit \
@@ -28,12 +28,12 @@ poetry run sfdao audit \
   --output example/output/report.html
 ```
 
-## Expected Output
+## 期待する生成物
 
 - `example/output/creditcard_synthetic.csv`
 - `example/output/report.html`
 
-On macOS:
+macOS の場合:
 
 ```bash
 open example/output/report.html
@@ -42,9 +42,9 @@ open example/output/report.html
 
 ## Phase 2 Workflow (Generate & Audit)
 
-Using the `sfdao run` command, you can execute "Generation -> Audit -> Report" in one go based on a configuration file.
+`sfdao run` コマンドを使用すると、設定ファイルに基づいて「生成→監査→レポート」を一括で実行できます。
 
-### Execution Procedure
+### 実行手順
 
 ```bash
 poetry run sfdao run \
@@ -53,7 +53,8 @@ poetry run sfdao run \
   --out-dir example/output_phase2
 ```
 
-### Expected Output
+### 期待する生成物
 
 - `example/output_phase2/synthetic.csv`
 - `example/output_phase2/report.html`
+
