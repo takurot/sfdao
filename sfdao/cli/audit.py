@@ -291,7 +291,8 @@ def _compute_privacy_scores(
         # But `reidentification_risk` also calls `_reference_distance` which is now fast (sampled).
         # We only track DCR part which is the heavy loop.
 
-        # We need DCR for median stats too, but reidentification_risk calculates it internally and discards it?
+        # We need DCR for median stats too, but reidentification_risk calculates it
+        # internally and discards it?
         # WAIT: The implementation of `reidentification_risk` in privacy.py:
         #   dcr = self.distance_to_closest_record(...)
         #   return float(np.mean(clipped))
@@ -322,7 +323,8 @@ def _compute_privacy_scores(
         )
 
         # Calculate Risk using the DCR we just got (avoiding 2nd heavy calc)
-        # We need to access private method `_reference_distance` or just use public API if I changed it.
+        # We need to access private method `_reference_distance` or just use public API
+        # if I changed it.
         # I didn't verify `_reference_distance` is public. It is private `_`.
         # Accessing `_reference_distance` is okay for internal optimization or I should open it.
         # Let's access `_reference_distance` since we are in `sfdao` package context.
