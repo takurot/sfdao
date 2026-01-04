@@ -14,6 +14,8 @@ import pandas as pd
 from numpy.typing import NDArray
 from rich.console import Console
 
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeRemainingColumn
+
 from sfdao.cli.progress import AuditProgress, AuditProgressConfig
 from sfdao.config.models import PrivacySettings
 from sfdao.evaluator.scoring import CompositeScorer
@@ -261,9 +263,6 @@ def _compute_privacy_scores(
     progress_callback = None
     if console and not quiet and not no_progress:
         # Use a temporary Progress instance for the calculation
-        # We need to import Progress/columns here or reuse from module
-        from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeRemainingColumn
-
         progress = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Optional, Callable
+from collections.abc import Sequence
 
 import numpy as np
 from numpy.typing import NDArray
@@ -19,7 +20,7 @@ class PrivacyEvaluator:
         self,
         real: Iterable[Iterable[float]] | NDArray[np.float64],
         synthetic: Iterable[Iterable[float]] | NDArray[np.float64],
-        progress_callback: callable[[int], None] | None = None,
+        progress_callback: Callable[[int], None] | None = None,
         batch_size: int = 1000,
     ) -> NDArray[np.float64]:
         real_arr = self._prepare_matrix(real)
@@ -50,7 +51,7 @@ class PrivacyEvaluator:
         self,
         real: Iterable[Iterable[float]] | NDArray[np.float64],
         synthetic: Iterable[Iterable[float]] | NDArray[np.float64],
-        progress_callback: callable[[int], None] | None = None,
+        progress_callback: Callable[[int], None] | None = None,
     ) -> float:
         real_arr = self._prepare_matrix(real)
         synthetic_arr = self._prepare_matrix(synthetic)
