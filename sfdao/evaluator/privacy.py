@@ -59,7 +59,7 @@ class PrivacyEvaluator:
         dcr = self.distance_to_closest_record(
             real_arr, synthetic_arr, progress_callback=progress_callback
         )
-        scale = self._reference_distance(real_arr)
+        scale = self.reference_distance(real_arr)
 
         scaled = np.exp(-dcr / (scale + 1e-12))
         clipped = np.clip(scaled, 0.0, 1.0)
@@ -91,7 +91,11 @@ class PrivacyEvaluator:
         if real.size == 0 or synthetic.size == 0:
             raise ValueError("Real and synthetic datasets must be non-empty.")
 
-    def _reference_distance(self, real: NDArray[np.float64]) -> float:
+    def reference_distance(self, real: NDArray[np.float64]) -> float:
+        """Calculate median nearest-neighbor distance as a reference scale.
+
+        Uses sampling (default 10k) for large datasets to improve performance.
+        """
         if real.shape[0] < 2:
             spread = float(np.max(np.std(real, axis=0, ddof=0))) if real.size else 1.0
             return 1.0 if spread == 0 else spread

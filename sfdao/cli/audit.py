@@ -282,54 +282,15 @@ def _compute_privacy_scores(
         progress_callback = _update
 
     try:
-        risk = evaluator.reidentification_risk(
-            real_matrix,
-            synthetic_matrix,
-            progress_callback=progress_callback,
-        )
-        # Note: privacy.py's reidentification_risk calls DCR which calls dcr with callback
-        # But `reidentification_risk` also calls `_reference_distance` which is now fast (sampled).
-        # We only track DCR part which is the heavy loop.
-
-        # We need DCR for median stats too, but reidentification_risk calculates it
-        # internally and discards it?
-        # WAIT: The implementation of `reidentification_risk` in privacy.py:
-        #   dcr = self.distance_to_closest_record(...)
-        #   return float(np.mean(clipped))
-        # It DOES NOT return DCR array.
-        # But `_compute_privacy_scores` needs `dcr_median`.
-        # Previously:
-        #   risk = evaluator.reidentification_risk(...)
-        #   dcr = evaluator.distance_to_closest_record(...)
-        # This means we were running DCR TWICE! That is a huge waste.
-
-        # NOTE: `reidentification_risk` internally calls DCR.
-        # We should optimize this by calling DCR once, then calculating risk from it manually,
-        # OR update PrivacyEvaluator to expose both (or risk taking DCR as input).
-
-        # For now, to respect the "PrivacyEvaluator" interface change I made (adding callback),
-        # I will just run DCR once myself, and use it to compute risk if possible,
-        # OR update PrivacyEvaluator to accept pre-computed DCR.
-
-        # Let's look at `PrivacyEvaluator.reidentification_risk` again.
-        # It does: `dcr = ...; scale = ...; return mean(...)`
-        # It's simple logic. I can replicate it here to avoid double computation (2x speedup!).
-
-        # REFACTOR: Calculate DCR once with progress.
+        # Calculate DCR once with progress, then compute risk manually (avoids 2x calc)
         dcr = evaluator.distance_to_closest_record(
             real_matrix,
             synthetic_matrix,
             progress_callback=progress_callback,
         )
 
-        # Calculate Risk using the DCR we just got (avoiding 2nd heavy calc)
-        # We need to access private method `_reference_distance` or just use public API
-        # if I changed it.
-        # I didn't verify `_reference_distance` is public. It is private `_`.
-        # Accessing `_reference_distance` is okay for internal optimization or I should open it.
-        # Let's access `_reference_distance` since we are in `sfdao` package context.
-        scale = evaluator._reference_distance(real_matrix)
-
+        # Calculate risk using the DCR we just computed
+        scale = evaluator.reference_distance(real_matrix)
         scaled = np.exp(-dcr / (scale + 1e-12))
         clipped = np.clip(scaled, 0.0, 1.0)
         risk = float(np.mean(clipped))
