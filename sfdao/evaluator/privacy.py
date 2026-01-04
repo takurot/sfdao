@@ -4,7 +4,7 @@ from typing import Iterable, Callable
 
 import numpy as np
 from numpy.typing import NDArray
-from sklearn.neighbors import KDTree
+from sklearn.neighbors import KDTree  # type: ignore
 
 __all__ = ["PrivacyEvaluator"]
 

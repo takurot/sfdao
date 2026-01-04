@@ -276,7 +276,7 @@ def _compute_privacy_scores(
         task_id = progress.add_task("  Computing risk...", total=len(synthetic_matrix))
         progress.start()
 
-        def _update(n: int):
+        def _update(n: int) -> None:
             progress.advance(task_id, advance=n)
 
         progress_callback = _update

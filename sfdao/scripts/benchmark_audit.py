@@ -9,7 +9,7 @@ from sfdao.cli.audit import run_audit
 from sfdao.scripts.generate_test_synthetic_data import generate_simple_synthetic
 
 
-def benchmark_audit(n_rows: int = 200000):
+def benchmark_audit(n_rows: int = 200000) -> None:
     console = Console()
     console.print(f"[bold blue]Starting benchmark with {n_rows} rows...[/bold blue]")
 
