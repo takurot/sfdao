@@ -137,21 +137,21 @@ def run_audit(
     # We estimate total steps for progress bar if possible (based on synthetic rows)
     # But PrivacyEvaluator manages batching.
     # We will pass a progress hook.
-    
+
     with progress.start_phase(
         "Privacy evaluation",
         detail=f"sample={privacy_settings.sample_size}" if privacy_settings else None,
     ):
         # We want to show a progress bar for the DCR calculation
-        # This requires accessing the progress context. 
+        # This requires accessing the progress context.
         # Since AuditProgress wraps phases, let's pass the progress object or a callback adapter.
-        
+
         # We will create a temporary progress task for this specific long-running op
         # inside _compute_privacy_scores if we want a bar.
         # However, `start_phase` returns a Heartbeat (spinner/text).
         # A progress bar would conflict with the spinner on the same line if not careful.
         # But `start_phase` is a context manager that clears itself (or persists).
-        
+
         # Let's delegate to _compute_privacy_scores and pass the console/progress config
         privacy_score, privacy_risk, privacy_dcr_median = _compute_privacy_scores(
             real_df, synthetic_df, shared_numeric, privacy_settings, console, quiet, no_progress
@@ -272,13 +272,13 @@ def _compute_privacy_scores(
             console=console,
             transient=True,
         )
-        
+
         task_id = progress.add_task("  Computing risk...", total=len(synthetic_matrix))
         progress.start()
 
         def _update(n: int):
             progress.advance(task_id, advance=n)
-        
+
         progress_callback = _update
 
     try:
@@ -288,7 +288,7 @@ def _compute_privacy_scores(
         # Note: privacy.py's reidentification_risk calls DCR which calls dcr with callback
         # But `reidentification_risk` also calls `_reference_distance` which is now fast (sampled).
         # We only track DCR part which is the heavy loop.
-        
+
         # We need DCR for median stats too, but reidentification_risk calculates it internally and discards it?
         # WAIT: The implementation of `reidentification_risk` in privacy.py:
         #   dcr = self.distance_to_closest_record(...)
@@ -299,37 +299,37 @@ def _compute_privacy_scores(
         #   risk = evaluator.reidentification_risk(...)
         #   dcr = evaluator.distance_to_closest_record(...)
         # This means we were running DCR TWICE! That is a huge waste.
-        
+
         # NOTE: `reidentification_risk` internally calls DCR.
-        # We should optimize this by calling DCR once, then calculating risk from it manually, 
+        # We should optimize this by calling DCR once, then calculating risk from it manually,
         # OR update PrivacyEvaluator to expose both (or risk taking DCR as input).
-        
+
         # For now, to respect the "PrivacyEvaluator" interface change I made (adding callback),
-        # I will just run DCR once myself, and use it to compute risk if possible, 
+        # I will just run DCR once myself, and use it to compute risk if possible,
         # OR update PrivacyEvaluator to accept pre-computed DCR.
-        
+
         # Let's look at `PrivacyEvaluator.reidentification_risk` again.
         # It does: `dcr = ...; scale = ...; return mean(...)`
         # It's simple logic. I can replicate it here to avoid double computation (2x speedup!).
-        
+
         # REFACTOR: Calculate DCR once with progress.
         dcr = evaluator.distance_to_closest_record(
             real_matrix, synthetic_matrix, progress_callback=progress_callback
         )
-        
+
         # Calculate Risk using the DCR we just got (avoiding 2nd heavy calc)
         # We need to access private method `_reference_distance` or just use public API if I changed it.
         # I didn't verify `_reference_distance` is public. It is private `_`.
         # Accessing `_reference_distance` is okay for internal optimization or I should open it.
         # Let's access `_reference_distance` since we are in `sfdao` package context.
         scale = evaluator._reference_distance(real_matrix)
-        
+
         scaled = np.exp(-dcr / (scale + 1e-12))
         clipped = np.clip(scaled, 0.0, 1.0)
         risk = float(np.mean(clipped))
 
     finally:
-        if progress_callback and 'progress' in locals():
+        if progress_callback and "progress" in locals():
             progress.stop()
 
     dcr_median = float(np.median(dcr)) if dcr.size > 0 else None

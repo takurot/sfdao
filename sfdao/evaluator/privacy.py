@@ -29,19 +29,19 @@ class PrivacyEvaluator:
 
         # Optimization: Use KDTree for nearest neighbor search
         tree = KDTree(real_arr)
-        
+
         n_synthetic = len(synthetic_arr)
         distances = np.zeros(n_synthetic, dtype=np.float64)
-        
+
         # Batch processing for progress reporting
         for start_idx in range(0, n_synthetic, batch_size):
             end_idx = min(start_idx + batch_size, n_synthetic)
             batch = synthetic_arr[start_idx:end_idx]
-            
+
             # k=1 returns (distances, indices) for the nearest neighbor
             batch_dists, _ = tree.query(batch, k=1)
             distances[start_idx:end_idx] = batch_dists.ravel()
-            
+
             if progress_callback:
                 progress_callback(len(batch))
 
@@ -106,23 +106,22 @@ class PrivacyEvaluator:
         # Default to 10k samples for reference distance even if sample_size is None
         # because this is just for scaling parameter estimation.
         ref_sample_limit = self.sample_size if self.sample_size is not None else 10000
-        
+
         if len(real) > ref_sample_limit:
             indices = np.random.choice(len(real), ref_sample_limit, replace=False)
             query_points = real[indices]
-        
+
         # k=2 because the nearest neighbor of a point is itself (distance 0)
         distances, _ = tree.query(query_points, k=2)
-        
+
         # Take the 2nd column (distance to the closest OTHER point)
         nearest_neighbor_dists = distances[:, 1]
 
         if nearest_neighbor_dists.size == 0:
-             return 1.0
+            return 1.0
 
         reference = float(np.median(nearest_neighbor_dists))
         if reference == 0.0:
             spread = float(np.max(np.std(real, axis=0, ddof=0)))
             reference = spread if spread > 0 else 1.0
         return reference
-
