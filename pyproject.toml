@@ -2,7 +2,7 @@
 name = "sfdao"
 version = "0.1.0"
 description = "Synthetic Finance Data Auditor & Optimizer"
-authors = ["SFDAO Team <team@sfdao.local>"]
+authors = ["takurot <takurot@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
 package-mode = true
