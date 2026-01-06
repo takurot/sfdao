@@ -28,12 +28,28 @@ SFDAO is an integrated tool for synthetic data generation, constraint applicatio
 
 ## Installation
 
+### Quick Install (PyPI)
+
+```bash
+# Install via pip
+pip install sfdao
+
+# Or use pipx for isolated installation (recommended)
+pipx install sfdao
+
+# With optional deep learning support (CTGAN)
+pip install sfdao[deep]
+```
+
 ### Prerequisites
 
-- Python 3.10 or higher
-- Poetry (recommended)
+- Python 3.10 - 3.12
+- macOS: WeasyPrint dependencies for PDF generation
+  ```bash
+  brew install cairo pango gdk-pixbuf libffi
+  ```
 
-### Setup
+### Development Setup
 
 ```bash
 # Clone the repository
@@ -43,20 +59,12 @@ cd sfdao
 # Install Poetry (if not already installed)
 curl -sSL https://install.python-poetry.org | python3 -
 
-# Update PATH (add to ~/.zshrc or ~/.bash_profile)
-export PATH="$HOME/.local/bin:$PATH"
-
-# Install dependencies (based on pyproject.toml/poetry.lock)
+# Install dependencies
 poetry install
 
-# Enable virtual environment (optional)
+# Enable virtual environment
 poetry shell
-
-# macOS-specific: Dependencies for WeasyPrint (for PDF generation)
-brew install cairo pango gdk-pixbuf libffi
 ```
-
-**Note**: macOS automatically generates `._*` files, but these are excluded via .gitignore.
 
 ## Quick Start
 
