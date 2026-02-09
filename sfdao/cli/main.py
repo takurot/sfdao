@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, Optional
 
+import pandas as pd
 import typer
 from pydantic import ValidationError
 from rich.console import Console
@@ -67,6 +68,63 @@ def _load_phase2_config_or_exit(config_path: Path) -> Phase2Config:
         raise typer.BadParameter(str(exc)) from exc
     except ValidationError as exc:
         raise typer.BadParameter(str(exc)) from exc
+
+
+def _load_phase2_config_from_option(config: Optional[Path]) -> Phase2Config:
+    config_path = validate_file_exists(config, "config")
+    return _load_phase2_config_or_exit(config_path)
+
+
+def _return_if_validate_only(validate_only: bool) -> bool:
+    if validate_only:
+        console.print("[green]✓[/green] Config is valid.")
+        return True
+    return False
+
+
+def _format_parameter_error(exc: Exception, error_prefix: Optional[str]) -> str:
+    if error_prefix:
+        return f"{error_prefix}: {exc}"
+    return str(exc)
+
+
+def _load_real_dataframe_or_exit(
+    real_path: Path,
+    *,
+    error_prefix: Optional[str] = None,
+    include_all_exceptions: bool = False,
+) -> pd.DataFrame:
+    try:
+        return CSVLoader().load(real_path)
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(_format_parameter_error(exc, error_prefix)) from exc
+    except Exception as exc:
+        if include_all_exceptions:
+            raise typer.BadParameter(_format_parameter_error(exc, error_prefix)) from exc
+        raise
+
+
+def _resolve_out_dir(out_dir: Optional[Path]) -> Path:
+    resolved_out_dir = out_dir or Path("output")
+    if resolved_out_dir.exists() and not resolved_out_dir.is_dir():
+        raise typer.BadParameter(f"'{resolved_out_dir}' is not a directory.")
+    resolved_out_dir.mkdir(parents=True, exist_ok=True)
+    return resolved_out_dir
+
+
+def _build_guard_engine(phase2_config: Phase2Config):
+    if not phase2_config.guard:
+        return None
+
+    from sfdao.guard.factory import create_guard_engine
+
+    return create_guard_engine(phase2_config.guard)
+
+
+def _build_scenario_engine(phase2_config: Phase2Config):
+    if not phase2_config.scenario:
+        return None
+    return load_scenario_engine(phase2_config.scenario, seed=phase2_config.seed)
 
 
 @app.callback()
@@ -250,28 +308,17 @@ def generate(
 
     Phase 2 implementation is incremental. In PR#14 this command supports baseline CSV generation.
     """
-    config_path = validate_file_exists(config, "config")
-    phase2_config = _load_phase2_config_or_exit(config_path)
+    phase2_config = _load_phase2_config_from_option(config)
 
-    if validate_only:
-        console.print("[green]✓[/green] Config is valid.")
+    if _return_if_validate_only(validate_only):
         return
 
     real_path = validate_file_exists(real, "real")
     output_path = validate_output_path(output, "output")
+    real_df = _load_real_dataframe_or_exit(real_path)
 
     try:
-        real_df = CSVLoader().load(real_path)
-    except (OSError, ValueError) as exc:
-        raise typer.BadParameter(str(exc)) from exc
-
-    try:
-        guard_engine = None
-        if phase2_config.guard:
-            from sfdao.guard.factory import create_guard_engine
-
-            guard_engine = create_guard_engine(phase2_config.guard)
-
+        guard_engine = _build_guard_engine(phase2_config)
         generator = build_generator(
             phase2_config.generator, seed=phase2_config.seed, guard=guard_engine
         )
@@ -334,40 +381,20 @@ def run(
     2. Audit: Evaluate synthetic data against real data
     3. Report: Generate evaluation report
     """
-    config_path = validate_file_exists(config, "config")
-    phase2_config = _load_phase2_config_or_exit(config_path)
+    phase2_config = _load_phase2_config_from_option(config)
 
-    if validate_only:
-        console.print("[green]✓[/green] Config is valid.")
+    if _return_if_validate_only(validate_only):
         return
 
     real_path = validate_file_exists(real, "real")
-
-    # 0. Setup output directory
-    if out_dir is None:
-        out_dir = Path("output")
-
-    if not out_dir.exists():
-        out_dir.mkdir(parents=True, exist_ok=True)
-    elif not out_dir.is_dir():
-        raise typer.BadParameter(f"'{out_dir}' is not a directory.")
-
-    # 1. Load Real Data
-    try:
-        real_df = CSVLoader().load(real_path)
-    except Exception as e:
-        raise typer.BadParameter(f"Failed to load real data: {e}")
-
-    # 2. Build Components
-    guard_engine = None
-    if phase2_config.guard:
-        from sfdao.guard.factory import create_guard_engine
-
-        guard_engine = create_guard_engine(phase2_config.guard)
-
-    scenario_engine = None
-    if phase2_config.scenario:
-        scenario_engine = load_scenario_engine(phase2_config.scenario, seed=phase2_config.seed)
+    out_dir = _resolve_out_dir(out_dir)
+    real_df = _load_real_dataframe_or_exit(
+        real_path,
+        error_prefix="Failed to load real data",
+        include_all_exceptions=True,
+    )
+    guard_engine = _build_guard_engine(phase2_config)
+    scenario_engine = _build_scenario_engine(phase2_config)
 
     try:
         generator = build_generator(
