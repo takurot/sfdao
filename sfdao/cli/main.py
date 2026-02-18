@@ -7,7 +7,7 @@ Data Auditor & Optimizer tool.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import TYPE_CHECKING, Annotated, Optional
 
 import pandas as pd
 import typer
@@ -22,6 +22,10 @@ from sfdao.ingestion.loader import CSVLoader
 from sfdao.scenario.loader import load_scenario_engine
 
 __all__ = ["app"]
+
+if TYPE_CHECKING:
+    from sfdao.guard.base import GuardEngine
+    from sfdao.scenario.engine import ScenarioEngine
 
 app = typer.Typer(
     name="sfdao",
@@ -112,7 +116,7 @@ def _resolve_out_dir(out_dir: Optional[Path]) -> Path:
     return resolved_out_dir
 
 
-def _build_guard_engine(phase2_config: Phase2Config):
+def _build_guard_engine(phase2_config: Phase2Config) -> GuardEngine | None:
     if not phase2_config.guard:
         return None
 
@@ -121,7 +125,7 @@ def _build_guard_engine(phase2_config: Phase2Config):
     return create_guard_engine(phase2_config.guard)
 
 
-def _build_scenario_engine(phase2_config: Phase2Config):
+def _build_scenario_engine(phase2_config: Phase2Config) -> ScenarioEngine | None:
     if not phase2_config.scenario:
         return None
     return load_scenario_engine(phase2_config.scenario, seed=phase2_config.seed)
