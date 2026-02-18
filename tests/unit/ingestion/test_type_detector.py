@@ -56,3 +56,39 @@ def test_detect_free_text_column():
     col_type = detector.detect(data, "description")
 
     assert col_type == ColumnType.FREE_TEXT
+
+
+def test_detect_all_null_column_as_free_text():
+    data = pd.Series([None, float("nan"), None])
+    detector = TypeDetector()
+
+    col_type = detector.detect(data, "empty_col")
+
+    assert col_type == ColumnType.FREE_TEXT
+
+
+def test_detect_credit_card_column_as_pii():
+    data = pd.Series(["4111 1111 1111 1111", "4242-4242-4242-4242", None])
+    detector = TypeDetector()
+
+    col_type = detector.detect(data, "card_number")
+
+    assert col_type == ColumnType.PII
+
+
+def test_detect_unix_second_timestamp_column_as_datetime():
+    data = pd.Series([1_700_000_000, 1_700_086_400, 1_700_172_800])
+    detector = TypeDetector()
+
+    col_type = detector.detect(data, "event_ts")
+
+    assert col_type == ColumnType.DATETIME
+
+
+def test_detect_comma_formatted_numbers_as_numeric():
+    data = pd.Series(["1,200.50", "3,000", "42"])
+    detector = TypeDetector()
+
+    col_type = detector.detect(data, "amount")
+
+    assert col_type == ColumnType.NUMERIC

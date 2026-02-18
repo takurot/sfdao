@@ -3,10 +3,15 @@
 TDD - Red phase: Writing tests before implementation.
 """
 
+from pathlib import Path
+
 import pytest
+import typer
 from typer.testing import CliRunner
 
-from sfdao.cli.main import app
+import sfdao.cli.main as cli_main
+
+app = cli_main.app
 
 runner = CliRunner()
 
@@ -168,3 +173,51 @@ class TestAuditVerbosity:
         assert result.exit_code == 0
         # In quiet mode, minimal output
         assert len(result.output.strip()) < 100 or result.output.strip() == ""
+
+
+class TestCliInternalHelpers:
+    """Tests for internal helper functions used by CLI commands."""
+
+    def test_resolve_out_dir_creates_directory(self, tmp_path: Path) -> None:
+        out_dir = tmp_path / "nested" / "output"
+
+        resolved = cli_main._resolve_out_dir(out_dir)
+
+        assert resolved == out_dir
+        assert resolved.exists()
+        assert resolved.is_dir()
+
+    def test_resolve_out_dir_rejects_file_path(self, tmp_path: Path) -> None:
+        invalid_path = tmp_path / "not_a_directory"
+        invalid_path.write_text("file", encoding="utf-8")
+
+        with pytest.raises(typer.BadParameter, match="not a directory"):
+            cli_main._resolve_out_dir(invalid_path)
+
+    def test_resolve_out_dir_defaults_to_output(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.chdir(tmp_path)
+
+        resolved = cli_main._resolve_out_dir(None)
+
+        assert resolved == Path("output")
+        assert (tmp_path / "output").is_dir()
+
+    def test_load_real_dataframe_or_exit_wraps_loader_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        csv_path = tmp_path / "real.csv"
+        csv_path.write_text("amount\n100\n", encoding="utf-8")
+
+        class FailingCSVLoader:
+            def load(self, path: Path):  # noqa: ANN001
+                raise ValueError("boom")
+
+        monkeypatch.setattr(cli_main, "CSVLoader", FailingCSVLoader)
+
+        with pytest.raises(typer.BadParameter, match="Failed to load real data: boom"):
+            cli_main._load_real_dataframe_or_exit(
+                csv_path,
+                error_prefix="Failed to load real data",
+            )
