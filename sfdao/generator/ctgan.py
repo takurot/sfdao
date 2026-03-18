@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Any
 
 import pandas as pd
 
@@ -23,8 +24,9 @@ class CTGANGenerator(BaseGenerator):
         seed: int | None = None,
         guard: GuardEngine | None = None,
         scenario: ScenarioEngine | None = None,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(seed=seed)
+        super().__init__(seed=seed, **kwargs)
         if CTGANSynthesizer is None:
             raise ImportError(
                 "CTGANGenerator requires 'sdv' package. "
@@ -43,11 +45,8 @@ class CTGANGenerator(BaseGenerator):
         metadata = SingleTableMetadata()
         metadata.detect_from_dataframe(real)
 
-        # Initialize synthesizer with fixed epochs for now (can be configurable later)
-        # Using a small number of epochs by default if not specified via some config mechanism,
-        # but SDV defaults (300) might be too slow for quick tests.
-        # Ideally, we should pass parameters from settings.
-        # For now, stick to defaults but allow seed.
+        # Initialize synthesizer, passing kwargs to CTGANSynthesizer
+        # For example, users can specify epochs or batch_size via settings.params
 
         # Note: SDV 1.x CTGANSynthesizer does not accept random_state/seed in __init__ easily
         # in the same way, but it uses torch/numpy seeds.
@@ -57,6 +56,7 @@ class CTGANGenerator(BaseGenerator):
             enforce_rounding=True,
             enforce_min_max_values=True,
             verbose=False,
+            **self.params,
         )
         # fit() in SDV doesn't take seed directly usually.
         self._synthesizer.fit(real)

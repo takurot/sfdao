@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Any
 
 import numpy as np
 import pandas as pd
@@ -55,8 +55,9 @@ class BaselineGenerator(BaseGenerator):
         seed: int | None = None,
         guard: GuardEngine | None = None,
         scenario: ScenarioEngine | None = None,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(seed=seed)
+        super().__init__(seed=seed, **kwargs)
         self._column_order: list[str] = []
         self._models: dict[str, _ColumnModel] = {}
         self.guard = guard
