@@ -29,13 +29,24 @@ class TestCTGANGenerator:
 
     def test_fit_calls_sdv_fit(self, mock_sdv):
         mock_synth_cls, mock_meta_cls = mock_sdv
-        gen = CTGANGenerator()
+        gen = CTGANGenerator(epochs=50, batch_size=100)
         real_data = pd.DataFrame({"col": [1, 2, 3]})
 
         gen.fit(real_data)
 
         # Verified metadata detection called
         mock_meta_cls.return_value.detect_from_dataframe.assert_called_with(real_data)
+
+        # Verify kwargs are passed to CTGANSynthesizer
+        mock_synth_cls.assert_called_with(
+            mock_meta_cls.return_value,
+            enforce_rounding=True,
+            enforce_min_max_values=True,
+            verbose=False,
+            epochs=50,
+            batch_size=100
+        )
+
         # Verified fit called
         mock_synth_cls.return_value.fit.assert_called_with(real_data)
 

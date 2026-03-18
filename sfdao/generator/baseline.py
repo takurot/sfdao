@@ -55,8 +55,9 @@ class BaselineGenerator(BaseGenerator):
         seed: int | None = None,
         guard: GuardEngine | None = None,
         scenario: ScenarioEngine | None = None,
+        **kwargs,
     ) -> None:
-        super().__init__(seed=seed)
+        super().__init__(seed=seed, **kwargs)
         self._column_order: list[str] = []
         self._models: dict[str, _ColumnModel] = {}
         self.guard = guard
