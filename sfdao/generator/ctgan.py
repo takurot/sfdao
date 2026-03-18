@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Any
 
 import pandas as pd
 
@@ -23,7 +24,7 @@ class CTGANGenerator(BaseGenerator):
         seed: int | None = None,
         guard: GuardEngine | None = None,
         scenario: ScenarioEngine | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         super().__init__(seed=seed, **kwargs)
         if CTGANSynthesizer is None:
