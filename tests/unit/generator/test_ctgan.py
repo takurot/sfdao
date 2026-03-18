@@ -44,7 +44,7 @@ class TestCTGANGenerator:
             enforce_min_max_values=True,
             verbose=False,
             epochs=50,
-            batch_size=100
+            batch_size=100,
         )
 
         # Verified fit called

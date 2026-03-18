@@ -9,11 +9,7 @@ from sfdao.generator.factory import build_generator
 
 class TestGeneratorFactory:
     def test_build_baseline(self):
-        settings = GeneratorSettings(
-            type="baseline",
-            n_samples=100,
-            params={"some_param": "value"}
-        )
+        settings = GeneratorSettings(type="baseline", n_samples=100, params={"some_param": "value"})
         gen = build_generator(settings, seed=42)
         assert isinstance(gen, BaselineGenerator)
         assert gen.seed == 42
@@ -25,9 +21,7 @@ class TestGeneratorFactory:
         # We should check that build_generator RETURNS a CTGANGenerator instance (or tries to).
         with patch("sfdao.generator.ctgan.CTGANSynthesizer"):
             settings = GeneratorSettings(
-                type="ctgan",
-                n_samples=100,
-                params={"epochs": 50, "batch_size": 100}
+                type="ctgan", n_samples=100, params={"epochs": 50, "batch_size": 100}
             )
             gen = build_generator(settings, seed=123)
             assert isinstance(gen, CTGANGenerator)

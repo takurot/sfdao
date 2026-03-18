@@ -19,13 +19,9 @@ def build_generator(
 ) -> BaseGenerator:
     generator_type = settings.type.strip().lower()
     if generator_type == "baseline":
-        return BaselineGenerator(
-            seed=seed, guard=guard, scenario=scenario, **settings.params
-        )
+        return BaselineGenerator(seed=seed, guard=guard, scenario=scenario, **settings.params)
 
     if generator_type == "ctgan":
-        return CTGANGenerator(
-            seed=seed, guard=guard, scenario=scenario, **settings.params
-        )
+        return CTGANGenerator(seed=seed, guard=guard, scenario=scenario, **settings.params)
 
     raise ValueError(f"Unsupported generator type: {settings.type}")
