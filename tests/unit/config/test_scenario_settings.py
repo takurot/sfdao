@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
@@ -32,6 +34,21 @@ def test_scenario_settings_enabled_false_no_name():
     assert settings.transformations is None
 
 
+def test_scenario_settings_enabled_true_requires_name() -> None:
+    """Enabled scenarios should fail validation without a name."""
+    with pytest.raises(ValidationError, match="scenario.name is required"):
+        ScenarioSettings(
+            enabled=True,
+            transformations=[{"column": "amount", "type": "shift", "params": {"value": 500.0}}],
+        )
+
+
+def test_scenario_settings_enabled_true_requires_transformations() -> None:
+    """Enabled scenarios should fail validation without transformations."""
+    with pytest.raises(ValidationError, match="scenario.transformations is required"):
+        ScenarioSettings(enabled=True, name="Incomplete Scenario")
+
+
 def test_scenario_settings_rejects_unknown_fields():
     """ScenarioSettings should reject unknown fields (extra='forbid')."""
     with pytest.raises(ValidationError):
@@ -50,9 +67,9 @@ def test_scenario_settings_rejects_params_key():
         )
 
 
-def test_load_phase2_config_with_simplified_scenario(tmp_path: pytest.TempPathFactory) -> None:
+def test_load_phase2_config_with_simplified_scenario(tmp_path: Path) -> None:
     """YAML config should support simplified scenario structure."""
-    config_path = tmp_path / "phase2.yaml"  # type: ignore
+    config_path = tmp_path / "phase2.yaml"
     config_path.write_text(
         "\n".join(
             [
@@ -83,3 +100,28 @@ def test_load_phase2_config_with_simplified_scenario(tmp_path: pytest.TempPathFa
     assert config.scenario.transformations[0].column == "amount"
     assert config.scenario.transformations[0].type == "shift"
     assert config.scenario.transformations[0].params["value"] == 500.0
+
+
+def test_load_phase2_config_rejects_enabled_scenario_without_transformations(
+    tmp_path: Path,
+) -> None:
+    """YAML config should fail fast on incomplete enabled scenario settings."""
+    config_path = tmp_path / "phase2.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "version: 2",
+                "generator:",
+                "  type: baseline",
+                "  n_samples: 100",
+                "scenario:",
+                "  enabled: true",
+                "  name: Incomplete Scenario",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValidationError, match="scenario.transformations is required"):
+        load_phase2_config(config_path)
