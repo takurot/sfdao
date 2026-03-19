@@ -40,7 +40,7 @@ console = Console()
 def version_callback(value: bool) -> None:
     """Display version and exit."""
     if value:
-        console.print("sfdao version 0.1.0")
+        console.print("sfdao version 0.1.1")
         raise typer.Exit()
 
 
