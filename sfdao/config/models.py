@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from sfdao.scenario.models import TransformationConfig
 
 __all__ = [
     "AuditSettings",
@@ -49,9 +51,20 @@ class ScenarioSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     enabled: bool = Field(False, description="Whether scenario injection is enabled.")
-    params: dict[str, Any] = Field(
-        default_factory=dict, description="Scenario-specific parameters."
+    name: str | None = Field(None, min_length=1, description="Scenario name.")
+    transformations: list[TransformationConfig] | None = Field(
+        None, description="List of transformations to apply."
     )
+
+    @model_validator(mode="after")
+    def validate_enabled_configuration(self) -> ScenarioSettings:
+        if not self.enabled:
+            return self
+        if self.name is None:
+            raise ValueError("scenario.name is required when scenario.enabled is true")
+        if self.transformations is None:
+            raise ValueError("scenario.transformations is required when scenario.enabled is true")
+        return self
 
 
 class PrivacySettings(BaseModel):

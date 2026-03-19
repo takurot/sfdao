@@ -13,6 +13,12 @@ def load_scenario_engine(
     if not settings or not settings.enabled:
         return None
 
-    # settings.params must match ScenarioConfig structure
-    config = ScenarioConfig.model_validate(settings.params)
+    name = settings.name
+    transformations = settings.transformations
+    if name is None or transformations is None:
+        raise ValueError("Enabled scenario settings must define name and transformations")
+    config = ScenarioConfig(
+        name=name,
+        transformations=transformations,
+    )
     return ScenarioEngine(config, seed=seed)

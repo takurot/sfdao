@@ -15,10 +15,11 @@ guard:
 scenario:
   enabled: false
   # Example if enabled:
-  # params:
-  #   transformations:
-  #     - type: scale
-  #       column: amount
+  # name: Stress Scenario
+  # transformations:
+  #   - type: scale
+  #     column: amount
+  #     params:
   #       factor: 1.5
 
 audit:
