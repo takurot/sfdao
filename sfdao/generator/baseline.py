@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Literal, Any
 
 import numpy as np
@@ -82,12 +83,13 @@ class BaselineGenerator(BaseGenerator):
             raise RuntimeError("Generator is not fitted. Call fit() before sample().")
 
         rng = np.random.default_rng(self.seed)
-        data: dict[str, object] = {}
-        for column in self._column_order:
-            model = self._models[column]
-            data[column] = self._sample_column(model, rng, n_samples)
+        if n_samples <= 0:
+            return self._sample_batch(rng, 0)
 
-        df = pd.DataFrame(data, columns=self._column_order)
+        if self.guard and self.guard.fill_to_target and self.guard.policy.value == "exclude":
+            return self._sample_with_fill(rng, n_samples)
+
+        df = self._sample_batch(rng, n_samples)
 
         if self.scenario:
             df, _ = self.scenario.apply(df)
@@ -96,6 +98,70 @@ class BaselineGenerator(BaseGenerator):
             df, _ = self.guard.apply(df)
 
         return df
+
+    def _sample_with_fill(self, rng: np.random.Generator, n_samples: int) -> pd.DataFrame:
+        """Sample with guard EXCLUDE mode, resampling until n_samples rows pass constraints."""
+        guard = self.guard  # guard is guaranteed non-None by the caller
+        if guard is None:
+            return self._sample_batch(rng, 0)
+
+        max_batch_size = max(n_samples * 128, 1024)
+        max_empty_batches_at_cap = 5
+        batch_size = max(n_samples * 2, n_samples)
+        accumulated: list[pd.DataFrame] = []
+        accumulated_count = 0
+        consecutive_empty_batches = 0
+        empty_result: pd.DataFrame | None = None
+
+        while accumulated_count < n_samples:
+            batch_df = self._sample_batch(rng, batch_size)
+
+            if self.scenario:
+                batch_df, _ = self.scenario.apply(batch_df)
+
+            batch_df, _ = guard.apply(batch_df)
+            empty_result = batch_df.iloc[0:0].copy()
+
+            if batch_df.empty:
+                consecutive_empty_batches += 1
+                if (
+                    batch_size >= max_batch_size
+                    and consecutive_empty_batches >= max_empty_batches_at_cap
+                ):
+                    if accumulated_count > 0:
+                        raise RuntimeError(
+                            "Unable to reach target sample size because the guard stopped "
+                            "admitting rows during repeated refill attempts."
+                        )
+                    return empty_result
+                batch_size = min(batch_size * 2, max_batch_size)
+                continue
+
+            accumulated.append(batch_df)
+            accumulated_count += len(batch_df)
+            consecutive_empty_batches = 0
+
+            needed = n_samples - accumulated_count
+            if needed <= 0:
+                break
+
+            keep_rate = len(batch_df) / batch_size
+            estimated_batch_size = math.ceil((needed / keep_rate) * 1.1)
+            batch_size = min(max(needed, estimated_batch_size), max_batch_size)
+
+        if not accumulated:
+            return empty_result if empty_result is not None else self._sample_batch(rng, 0)
+
+        combined: pd.DataFrame = pd.concat(accumulated, ignore_index=True)
+        result: pd.DataFrame = combined.iloc[:n_samples].reset_index(drop=True)
+        return result
+
+    def _sample_batch(self, rng: np.random.Generator, n_samples: int) -> pd.DataFrame:
+        data: dict[str, object] = {}
+        for column in self._column_order:
+            model = self._models[column]
+            data[column] = self._sample_column(model, rng, n_samples)
+        return pd.DataFrame(data, columns=self._column_order)
 
     def _build_column_model(
         self, series: pd.Series, column: str, detector: TypeDetector

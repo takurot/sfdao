@@ -35,6 +35,13 @@ class GuardSettings(BaseModel):
     mode: Literal["detect", "exclude", "clip", "correct"] = Field(
         "detect", description="How to handle violations (detect only, drop rows, clip values)."
     )
+    fill_to_target: bool = Field(
+        False,
+        description=(
+            "If True and mode is 'exclude', the generator resamples until n_samples rows pass "
+            "the guard constraints. Useful when maintaining sample size is critical."
+        ),
+    )
     params: dict[str, Any] = Field(default_factory=dict, description="Guard-specific parameters.")
 
 
