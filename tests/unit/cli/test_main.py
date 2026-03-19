@@ -251,6 +251,29 @@ class TestRunCommand:
         assert result.exit_code != 0
         assert "ml-target" in result.output.lower() or "required" in result.output.lower()
 
+    def test_run_validate_only_still_requires_ml_target(self, tmp_path: Path) -> None:
+        """Test that validate-only mode still validates ML utility flag combinations."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(
+            "generator:\n  type: gaussian\n  n_samples: 5\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "--config",
+                str(config_file),
+                "--validate-only",
+                "--ml-utility",
+                "--quiet",
+            ],
+        )
+
+        assert result.exit_code != 0
+        assert "ml-target" in result.output.lower() or "required" in result.output.lower()
+
     def test_run_without_ml_utility_passes_false(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:

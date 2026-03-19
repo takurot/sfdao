@@ -401,11 +401,11 @@ def run(
     """
     phase2_config = _load_phase2_config_from_option(config)
 
-    if _return_if_validate_only(validate_only):
-        return
-
     if ml_utility and not ml_target:
         raise typer.BadParameter("--ml-target is required when --ml-utility is enabled.")
+
+    if _return_if_validate_only(validate_only):
+        return
 
     real_path = validate_file_exists(real, "real")
     out_dir = _resolve_out_dir(out_dir)
