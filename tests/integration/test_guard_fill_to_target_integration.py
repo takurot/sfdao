@@ -43,6 +43,22 @@ class RejectEvenIndexRule(Rule):
         ]
 
 
+class RejectNinetyNinePercentRule(Rule):
+    """Rule that keeps only every 100th row (99% rejection rate)."""
+
+    def validate(self, df: pd.DataFrame) -> list[Violation]:
+        return [
+            Violation(
+                column="value",
+                row_index=i,
+                rule_name="RejectNinetyNinePercent",
+                message=f"Row {i} rejected",
+            )
+            for i in range(len(df))
+            if i % 100 != 0
+        ]
+
+
 @pytest.fixture
 def real_df() -> pd.DataFrame:
     return pd.DataFrame({"value": [10.0, 20.0, 30.0, 40.0, 50.0] * 20})
@@ -99,6 +115,22 @@ def test_baseline_generator_fill_to_target_with_low_rejection(real_df: pd.DataFr
     assert len(result) == n_samples
 
 
+def test_baseline_generator_fill_to_target_with_high_rejection(real_df: pd.DataFrame):
+    """fill_to_target still reaches n_samples with a very high rejection rate."""
+    guard = GuardEngine(
+        rules=[RejectNinetyNinePercentRule(columns=["value"])],
+        policy=GuardPolicy.EXCLUDE,
+        fill_to_target=True,
+    )
+    gen = BaselineGenerator(seed=42, guard=guard)
+    gen.fit(real_df)
+
+    n_samples = 100
+    result = gen.sample(n_samples)
+
+    assert len(result) == n_samples
+
+
 def test_baseline_generator_fill_to_target_config_driven():
     """fill_to_target via GuardSettings flows through the factory correctly."""
     from sfdao.config.models import GuardSettings
@@ -144,8 +176,8 @@ def test_baseline_generator_fill_to_target_non_exclude_mode_no_fill(real_df: pd.
     assert len(result) == n_samples
 
 
-def test_baseline_generator_fill_to_target_stops_after_max_attempts():
-    """When all rows are rejected, fill_to_target stops and returns available rows."""
+def test_baseline_generator_fill_to_target_returns_typed_empty_frame_when_all_rows_rejected():
+    """When all rows are rejected, fill_to_target stops and preserves schema."""
     from sfdao.guard.base import Rule
 
     class AllViolateRule(Rule):
@@ -173,3 +205,4 @@ def test_baseline_generator_fill_to_target_stops_after_max_attempts():
     result = gen.sample(10)
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 0
+    assert result["value"].dtype == real_df["value"].dtype
