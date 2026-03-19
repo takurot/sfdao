@@ -19,10 +19,8 @@ def test_integration_scenario_injection():
     # Inject a scenario that shifts amount by +1000
     scenario_settings = ScenarioSettings(
         enabled=True,
-        params={
-            "name": "Integration Test",
-            "transformations": [{"column": "amount", "type": "shift", "params": {"value": 1000.0}}],
-        },
+        name="Integration Test",
+        transformations=[{"column": "amount", "type": "shift", "params": {"value": 1000.0}}],
     )
 
     # 3. Load Components

@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from sfdao.scenario.models import TransformationConfig
+
 __all__ = [
     "AuditSettings",
     "GeneratorSettings",
@@ -49,8 +51,9 @@ class ScenarioSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     enabled: bool = Field(False, description="Whether scenario injection is enabled.")
-    params: dict[str, Any] = Field(
-        default_factory=dict, description="Scenario-specific parameters."
+    name: str | None = Field(None, description="Scenario name.")
+    transformations: list[TransformationConfig] | None = Field(
+        None, description="List of transformations to apply."
     )
 
 
