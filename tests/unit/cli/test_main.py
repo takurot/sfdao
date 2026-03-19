@@ -175,6 +175,139 @@ class TestAuditVerbosity:
         assert len(result.output.strip()) < 100 or result.output.strip() == ""
 
 
+class TestRunCommand:
+    """Tests for the 'run' subcommand, specifically ML utility flags."""
+
+    def test_run_accepts_ml_utility_flag(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that run command accepts --ml-utility flag."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(
+            "generator:\n  type: gaussian\n  n_samples: 5\n",
+            encoding="utf-8",
+        )
+        real_csv = tmp_path / "real.csv"
+        real_csv.write_text("col1,col2\n1.0,2.0\n3.0,4.0\n5.0,6.0\n", encoding="utf-8")
+
+        calls: list[dict] = []
+
+        def fake_run_audit(**kwargs):  # noqa: ANN001
+            calls.append(kwargs)
+
+        monkeypatch.setattr(cli_main, "run_audit", fake_run_audit)
+
+        import sfdao.cli.main as m
+
+        monkeypatch.setattr(m, "build_generator", lambda *a, **kw: _FakeGenerator(real_csv))
+
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "--real",
+                str(real_csv),
+                "--config",
+                str(config_file),
+                "--out-dir",
+                str(tmp_path / "out"),
+                "--ml-utility",
+                "--ml-target",
+                "col1",
+                "--quiet",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert len(calls) == 1
+        assert calls[0]["ml_utility"] is True
+        assert calls[0]["ml_target"] == "col1"
+
+    def test_run_ml_utility_requires_ml_target(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that run command fails when --ml-utility is set without --ml-target."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(
+            "generator:\n  type: gaussian\n  n_samples: 5\n",
+            encoding="utf-8",
+        )
+        real_csv = tmp_path / "real.csv"
+        real_csv.write_text("col1,col2\n1.0,2.0\n3.0,4.0\n5.0,6.0\n", encoding="utf-8")
+
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "--real",
+                str(real_csv),
+                "--config",
+                str(config_file),
+                "--out-dir",
+                str(tmp_path / "out"),
+                "--ml-utility",
+                "--quiet",
+            ],
+        )
+        assert result.exit_code != 0
+        assert "ml-target" in result.output.lower() or "required" in result.output.lower()
+
+    def test_run_without_ml_utility_passes_false(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that run command passes ml_utility=False when flag is absent."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text(
+            "generator:\n  type: gaussian\n  n_samples: 5\n",
+            encoding="utf-8",
+        )
+        real_csv = tmp_path / "real.csv"
+        real_csv.write_text("col1,col2\n1.0,2.0\n3.0,4.0\n5.0,6.0\n", encoding="utf-8")
+
+        calls: list[dict] = []
+
+        def fake_run_audit(**kwargs):  # noqa: ANN001
+            calls.append(kwargs)
+
+        monkeypatch.setattr(cli_main, "run_audit", fake_run_audit)
+
+        import sfdao.cli.main as m
+
+        monkeypatch.setattr(m, "build_generator", lambda *a, **kw: _FakeGenerator(real_csv))
+
+        result = runner.invoke(
+            app,
+            [
+                "run",
+                "--real",
+                str(real_csv),
+                "--config",
+                str(config_file),
+                "--out-dir",
+                str(tmp_path / "out"),
+                "--quiet",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert len(calls) == 1
+        assert calls[0]["ml_utility"] is False
+        assert calls[0]["ml_target"] is None
+
+
+class _FakeGenerator:
+    """Minimal fake generator for tests."""
+
+    def __init__(self, real_csv: Path) -> None:
+        import pandas as pd
+
+        self._df = pd.read_csv(real_csv)
+
+    def fit(self, df) -> None:  # noqa: ANN001
+        pass
+
+    def sample(self, n: int):  # noqa: ANN001
+        return self._df.head(n)
+
+
 class TestCliInternalHelpers:
     """Tests for internal helper functions used by CLI commands."""
 

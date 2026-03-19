@@ -377,6 +377,20 @@ def run(
             help="Suppress console output.",
         ),
     ] = False,
+    ml_utility: Annotated[
+        bool,
+        typer.Option(
+            "--ml-utility",
+            help="Enable ML utility evaluation (TSTR). Disabled by default due to compute cost.",
+        ),
+    ] = False,
+    ml_target: Annotated[
+        Optional[str],
+        typer.Option(
+            "--ml-target",
+            help="Target column for ML utility evaluation (required if --ml-utility is set).",
+        ),
+    ] = None,
 ) -> None:
     """Run generate → guard → audit pipeline (Phase 2).
 
@@ -389,6 +403,9 @@ def run(
 
     if _return_if_validate_only(validate_only):
         return
+
+    if ml_utility and not ml_target:
+        raise typer.BadParameter("--ml-target is required when --ml-utility is enabled.")
 
     real_path = validate_file_exists(real, "real")
     out_dir = _resolve_out_dir(out_dir)
@@ -440,6 +457,8 @@ def run(
         console=console,
         weights=weights,
         privacy_settings=privacy_settings,
+        ml_utility=ml_utility,
+        ml_target=ml_target,
     )
 
 
