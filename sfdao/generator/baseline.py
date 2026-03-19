@@ -82,6 +82,10 @@ class BaselineGenerator(BaseGenerator):
             raise RuntimeError("Generator is not fitted. Call fit() before sample().")
 
         rng = np.random.default_rng(self.seed)
+
+        if self.guard and self.guard.fill_to_target and self.guard.policy.value == "exclude":
+            return self._sample_with_fill(rng, n_samples)
+
         data: dict[str, object] = {}
         for column in self._column_order:
             model = self._models[column]
@@ -96,6 +100,44 @@ class BaselineGenerator(BaseGenerator):
             df, _ = self.guard.apply(df)
 
         return df
+
+    def _sample_with_fill(self, rng: np.random.Generator, n_samples: int) -> pd.DataFrame:
+        """Sample with guard EXCLUDE mode, resampling until n_samples rows pass constraints."""
+        assert self.guard is not None  # always called with guard set
+        MAX_ATTEMPTS = 10
+        accumulated: list[pd.DataFrame] = []
+        accumulated_count = 0
+
+        for _ in range(MAX_ATTEMPTS):
+            if accumulated_count >= n_samples:
+                break
+
+            needed = n_samples - accumulated_count
+            # Oversample to reduce iterations; at minimum generate needed rows
+            batch_size = max(needed * 2, n_samples)
+
+            data: dict[str, object] = {}
+            for column in self._column_order:
+                model = self._models[column]
+                data[column] = self._sample_column(model, rng, batch_size)
+
+            batch_df = pd.DataFrame(data, columns=self._column_order)
+
+            if self.scenario:
+                batch_df, _ = self.scenario.apply(batch_df)
+
+            batch_df, _ = self.guard.apply(batch_df)
+
+            if not batch_df.empty:
+                accumulated.append(batch_df)
+                accumulated_count += len(batch_df)
+
+        if not accumulated:
+            return pd.DataFrame(columns=self._column_order)
+
+        combined: pd.DataFrame = pd.concat(accumulated, ignore_index=True)
+        result: pd.DataFrame = combined.iloc[:n_samples].reset_index(drop=True)
+        return result
 
     def _build_column_model(
         self, series: pd.Series, column: str, detector: TypeDetector

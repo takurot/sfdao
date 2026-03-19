@@ -33,4 +33,4 @@ def create_guard_engine(settings: GuardSettings) -> GuardEngine:
             rules.append(MonotonicDatetimeRule(columns=p["columns"]))
 
     policy = GuardPolicy(settings.mode)
-    return GuardEngine(rules=rules, policy=policy)
+    return GuardEngine(rules=rules, policy=policy, fill_to_target=settings.fill_to_target)

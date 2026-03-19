@@ -29,9 +29,15 @@ class Rule:
 
 
 class GuardEngine:
-    def __init__(self, rules: List[Rule], policy: GuardPolicy = GuardPolicy.DETECT):
+    def __init__(
+        self,
+        rules: List[Rule],
+        policy: GuardPolicy = GuardPolicy.DETECT,
+        fill_to_target: bool = False,
+    ):
         self.rules = rules
         self.policy = policy
+        self.fill_to_target = fill_to_target
 
     def apply(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, List[Violation]]:
         """Apply rules and policy to the dataframe."""
