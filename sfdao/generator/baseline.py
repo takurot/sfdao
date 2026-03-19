@@ -103,7 +103,9 @@ class BaselineGenerator(BaseGenerator):
 
     def _sample_with_fill(self, rng: np.random.Generator, n_samples: int) -> pd.DataFrame:
         """Sample with guard EXCLUDE mode, resampling until n_samples rows pass constraints."""
-        assert self.guard is not None  # always called with guard set
+        guard = self.guard  # guard is guaranteed non-None by the caller
+        if guard is None:
+            return pd.DataFrame(columns=self._column_order)
         MAX_ATTEMPTS = 10
         accumulated: list[pd.DataFrame] = []
         accumulated_count = 0
@@ -126,7 +128,7 @@ class BaselineGenerator(BaseGenerator):
             if self.scenario:
                 batch_df, _ = self.scenario.apply(batch_df)
 
-            batch_df, _ = self.guard.apply(batch_df)
+            batch_df, _ = guard.apply(batch_df)
 
             if not batch_df.empty:
                 accumulated.append(batch_df)
