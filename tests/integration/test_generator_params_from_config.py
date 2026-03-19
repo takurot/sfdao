@@ -40,7 +40,8 @@ class TestGeneratorParamsFromConfig:
     def test_baseline_params_stored_from_config(self, tmp_path: Path):
         cfg = _load_phase2_config(
             tmp_path,
-            dedent("""\
+            dedent(
+                """\
             version: 2
             seed: 1
             generator:
@@ -49,7 +50,8 @@ class TestGeneratorParamsFromConfig:
               params:
                 custom_key: hello
                 numeric_param: 99
-            """),
+            """
+            ),
         )
         gen = build_generator(cfg.generator, seed=cfg.seed)
         assert isinstance(gen, BaselineGenerator)
@@ -59,7 +61,8 @@ class TestGeneratorParamsFromConfig:
         with patch("sfdao.generator.ctgan.CTGANSynthesizer"):
             cfg = _load_phase2_config(
                 tmp_path,
-                dedent("""\
+                dedent(
+                    """\
                 version: 2
                 seed: 7
                 generator:
@@ -68,7 +71,8 @@ class TestGeneratorParamsFromConfig:
                   params:
                     epochs: 100
                     batch_size: 256
-                """),
+                """
+                ),
             )
             gen = build_generator(cfg.generator, seed=cfg.seed)
             assert isinstance(gen, CTGANGenerator)
@@ -83,7 +87,8 @@ class TestGeneratorParamsFromConfig:
         ):
             cfg = _load_phase2_config(
                 tmp_path,
-                dedent("""\
+                dedent(
+                    """\
                 version: 2
                 generator:
                   type: ctgan
@@ -91,7 +96,8 @@ class TestGeneratorParamsFromConfig:
                   params:
                     epochs: 30
                     batch_size: 64
-                """),
+                """
+                ),
             )
             gen = build_generator(cfg.generator, seed=None)
             real_df = pd.DataFrame({"x": [1, 2, 3]})
@@ -104,12 +110,14 @@ class TestGeneratorParamsFromConfig:
     def test_empty_params_is_ok(self, tmp_path: Path):
         cfg = _load_phase2_config(
             tmp_path,
-            dedent("""\
+            dedent(
+                """\
             version: 2
             generator:
               type: baseline
               n_samples: 5
-            """),
+            """
+            ),
         )
         gen = build_generator(cfg.generator, seed=None)
         assert gen.params == {}
@@ -118,7 +126,8 @@ class TestGeneratorParamsFromConfig:
         """Smoke test: BaselineGenerator still produces correct output when params set."""
         cfg = _load_phase2_config(
             tmp_path,
-            dedent("""\
+            dedent(
+                """\
             version: 2
             seed: 42
             generator:
@@ -126,7 +135,8 @@ class TestGeneratorParamsFromConfig:
               n_samples: 20
               params:
                 ignored_by_baseline: true
-            """),
+            """
+            ),
         )
         gen = build_generator(cfg.generator, seed=cfg.seed)
         real_df = pd.DataFrame({"amount": [10.0, 20.0, 30.0]})
